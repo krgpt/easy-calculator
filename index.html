@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>편리한 계산기 모음</title>
+    <style>
+        /* Selene 템플릿 감성의 뉴트럴 크림 톤앤매너 */
+        :root {
+            --bg-color: #FAF9F7;        /* 차분한 크림 배경 */
+            --card-bg: #FFFFFF;         /* 항목 배경 흰색 */
+            --text-main: #1A1A1A;       /* 진한 차콜 텍스트 */
+            --accent-color: #333333;    /* 포인트 다크 그레이 */
+            --border-color: #E6E4DF;    /* 은은한 테두리선 */
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 60px 40px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* 헤더 영역 (좌측 정렬) */
+        header {
+            margin-bottom: 40px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 25px;
+            text-align: left;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin: 0 0 10px 0;
+            color: var(--text-main);
+        }
+
+        p {
+            font-size: 15px;
+            color: #767676;
+            margin: 0;
+        }
+
+        /* 버튼 배열 컨테이너: 세로로 한 줄씩 이어지도록 정렬 */
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        /* 개별 파일 링크 버튼 (제목만 표시) */
+        .file-btn {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 20px 24px;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: all 0.2s ease;
+        }
+
+        .file-btn:hover {
+            border-color: var(--accent-color);
+            transform: translateX(4px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .file-btn .btn-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>편리한 계산기 모음</h1>
+            <p>버튼을 클릭하면 해당 계산기 페이지가 새로운 독립 창으로 열립니다. 모든 계산 법칙은 정부의 정책 변화와 법령 변화에 따라 변수가 생길 수 있습니다.</p>
+        </header>
+
+        <!-- 세로로 길게 이어지는 버튼 공간 -->
+        <div class="button-container" id="buttonBox"></div>
+    </div>
+
+    <script>
+        // "cal house" 폴더 경로가 반영된 파일 목록
+        const fileList = [
+            { label: "월급 실수령액 계산", fileName: "cal house/001-월급 실수령액 계산.html" },
+            { label: "퇴직금 및 퇴직연금 계산", fileName: "cal house/002-퇴직금 및 퇴직연금 계산.html" },
+            { label: "연말정산 환급금 및 추가납부액 계산", fileName: "cal house/003-연말정산 환급금 및 추가납부액 계산.html" },
+            { label: "종합소득세 신고 계산", fileName: "cal house/004-종합소득세 신고 계산.html" },
+            { label: "취득세 및 부대비용 계산", fileName: "cal house/005-취득세 및 부대비용 계산.html" },
+            { label: "재산세 및 종합부동산세 계산", fileName: "cal house/006-재산세 및 종합부동산세 계산.html" },
+            { label: "양도소득세 계산", fileName: "cal house/007-양도소득세 계산.html" },
+            { label: "중개보수 계산", fileName: "cal house/008-중개보수 계산.html" },
+            { label: "대출 이자 계산", fileName: "cal house/009-대출 이자 계산.html" },
+            { label: "DSR 및 LTV 한도 계산", fileName: "cal house/010-DSR 및 LTV 한도 계산.html" },
+            { label: "예금, 적금 만기 수령액 계산", fileName: "cal house/011-예금, 적금 만기 수령액 계산.html" },
+            { label: "주식 및 ETF 투자 수익률 및 세금 계산", fileName: "cal house/012-주식 및 ETF 투자 수익률 및 세금 계산.html" },
+            { label: "국민연금 예상 수령액 및 수급 개시 연령 계산", fileName: "cal house/013-국민연금 예상 수령액 및 수급 개시 연령 계산.html" },
+            { label: "신용카드 소득공제 최적화 계산", fileName: "cal house/014-신용카드 소득공제 최적화 계산.html" },
+            { label: "쉬운 비율 계산기", fileName: "cal house/015-쉬운 비율 계산기.html" }
+        ];
+
+        const buttonBox = document.getElementById('buttonBox');
+
+        fileList.forEach((item) => {
+            const button = document.createElement('button');
+            button.className = 'file-btn';
+            
+            // 파일 제목만 표시
+            button.innerHTML = `
+                <span class="btn-title">${item.label}</span>
+            `;
+            
+            // 클릭 시 "cal house/" 폴더 안의 해당 파일이 새 창으로 열림 (사이즈: 900x700)
+            button.onclick = function() {
+                window.open(item.fileName, '_blank', 'width=1400,height=1000,scrollbars=yes');
+            };
+
+            buttonBox.appendChild(button);
+        });
+    </script>
+
+</body>
+</html>
