@@ -2,7 +2,8 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>편리한 계산기 모음</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>종합 유틸리티 및 계산기 포털</title>
     <style>
         /* Selene 템플릿 감성의 뉴트럴 크림 톤앤매너 */
         :root {
@@ -19,6 +20,8 @@
             color: var(--text-main);
             margin: 0;
             padding: 60px 40px;
+            /* 스크롤바 생김으로 인한 화면 밀림(흔들림) 현상 방지 */
+            overflow-y: scroll;
         }
 
         .container {
@@ -48,35 +51,87 @@
             margin: 0;
         }
 
-        /* 버튼 배열 컨테이너: 세로로 한 줄씩 이어지도록 정렬 */
-        .button-container {
+        /* 카테고리 및 버튼 배열 컨테이너 */
+        .category-container {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            align-items: flex-start;
+            gap: 16px;
+        }
+
+        /* 대메뉴 카테고리 버튼 스타일 */
+        .category-btn {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .category-btn:hover {
+            border-color: var(--accent-color);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .category-btn .category-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        /* 화살표 아이콘 애니메이션 효과 */
+        .category-btn .arrow-icon {
+            font-size: 14px;
+            color: #767676;
+            transition: transform 0.3s ease;
+        }
+
+        .category-btn.active .arrow-icon {
+            transform: rotate(180deg);
+        }
+
+        /* 서브 계산기 목록을 감싸는 컨테이너 (기본 숨김 처리) */
+        .sub-button-container {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            padding-left: 15px;
+            border-left: 2px solid var(--border-color);
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .sub-button-container.open {
+            display: flex;
         }
 
         /* 개별 파일 링크 버튼 (제목만 표시) */
         .file-btn {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            padding: 20px 24px;
+            padding: 16px 20px;
             width: 100%;
             text-align: left;
             cursor: pointer;
             border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.01);
             transition: all 0.2s ease;
         }
 
         .file-btn:hover {
             border-color: var(--accent-color);
             transform: translateX(4px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.04);
         }
 
         .file-btn .btn-title {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 500;
             color: var(--text-main);
         }
@@ -86,17 +141,41 @@
 
     <div class="container">
         <header>
-            <h1>편리한 계산기 모음</h1>
-            <p>버튼을 클릭하면 해당 계산기 페이지가 새로운 독립 창으로 열립니다. 모든 계산 법칙은 정부의 정책 변화와 법령 변화에 따라 변수가 생길 수 있습니다.</p>
+            <h1>유틸리티 포털</h1>
+            <p>원하시는 카테고리를 선택하여 필요한 도구를 이용하세요. 정부 정책 및 법령 변화에 따라 변수가 생길 수 있습니다.</p>
         </header>
 
-        <!-- 세로로 길게 이어지는 버튼 공간 -->
-        <div class="button-container" id="buttonBox"></div>
+        <!-- 메인 카테고리 목록 공간 -->
+        <div class="category-container" id="categoryContainer">
+            
+            <!-- 1. 편리한 계산기 모음 카테고리 섹션 -->
+            <div class="category-wrapper">
+                <button class="category-btn" id="calcToggleBtn">
+                    <span class="category-title">편리한 계산기 모음</span>
+                    <span class="arrow-icon">▼</span>
+                </button>
+                
+                <!-- 세로로 펼쳐지는 계산기 서브 목록 공간 -->
+                <div class="sub-button-container" id="buttonBox"></div>
+            </div>
+
+            <!-- 2. 음식 칼로리 및 건강 도구 카테고리 섹션 (확장형 데이터 구조 적용) -->
+            <div class="category-wrapper">
+                <button class="category-btn" id="foodToggleBtn">
+                    <span class="category-title">음식 칼로리 보기</span>
+                    <span class="arrow-icon">▼</span>
+                </button>
+                
+                <!-- 음식 칼로리 관련 서브 목록이 동적으로 펼쳐질 공간 -->
+                <div class="sub-button-container" id="foodButtonBox"></div>
+            </div>
+
+        </div>
     </div>
 
     <script>
-        // "cal house" 폴더 경로가 반영된 파일 목록
-        const fileList = [
+        // 1. 일반 금융/생활 계산기 목록 데이터
+        const utilityFileList = [
             { label: "월급 실수령액 계산", fileName: "cal house/001-월급 실수령액 계산.html" },
             { label: "퇴직금 및 퇴직연금 계산", fileName: "cal house/002-퇴직금 및 퇴직연금 계산.html" },
             { label: "연말정산 환급금 및 추가납부액 계산", fileName: "cal house/003-연말정산 환급금 및 추가납부액 계산.html" },
@@ -114,24 +193,56 @@
             { label: "쉬운 비율 계산기", fileName: "cal house/015-쉬운 비율 계산기.html" }
         ];
 
-        const buttonBox = document.getElementById('buttonBox');
+        // 2. 음식 칼로리 및 식단 관련 도구 목록 데이터 (추후 항목 추가 용이)
+        const foodFileList = [
+            { label: "AI 카메라 음식물 칼로리 계산기", fileName: "cal house/016-test.html" },
+            { label: "일일 권장 칼로리 및 영양성분 분석기 (준비중)", fileName: "#" },
+            { label: "식단 기록 및 주간 영양 리포트 (준비중)", fileName: "#" }
+        ];
 
-        fileList.forEach((item) => {
+        const buttonBox = document.getElementById('buttonBox');
+        const calcToggleBtn = document.getElementById('calcToggleBtn');
+        
+        const foodButtonBox = document.getElementById('foodButtonBox');
+        const foodToggleBtn = document.getElementById('foodToggleBtn');
+
+        // 첫 번째 카테고리 목록 동적 생성
+        utilityFileList.forEach((item) => {
             const button = document.createElement('button');
             button.className = 'file-btn';
-            
-            // 파일 제목만 표시
-            button.innerHTML = `
-                <span class="btn-title">${item.label}</span>
-            `;
-            
-            // 클릭 시 "cal house/" 폴더 안의 해당 파일이 새 창으로 열림 (사이즈: 900x700)
+            button.innerHTML = `<span class="btn-title">${item.label}</span>`;
             button.onclick = function() {
                 window.open(item.fileName, '_blank', 'width=1400,height=1000,scrollbars=yes');
             };
-
             buttonBox.appendChild(button);
         });
+
+        // 두 번째 "음식 칼로리 보기" 카테고리 목록 동적 생성 (추후 확장 대비)
+        foodFileList.forEach((item) => {
+            const button = document.createElement('button');
+            button.className = 'file-btn';
+            button.innerHTML = `<span class="btn-title">${item.label}</span>`;
+            button.onclick = function() {
+                if (item.fileName !== '#') {
+                    window.open(item.fileName, '_blank', 'width=1400,height=1000,scrollbars=yes');
+                } else {
+                    alert("해당 기능은 추후 업데이트될 예정입니다!");
+                }
+            };
+            foodButtonBox.appendChild(button);
+        });
+
+        // "편리한 계산기 모음" 메인 버튼 토글 기능
+        calcToggleBtn.onclick = function() {
+            calcToggleBtn.classList.toggle('active');
+            buttonBox.classList.toggle('open');
+        };
+
+        // "음식 칼로리 보기" 메인 버튼 토글 기능
+        foodToggleBtn.onclick = function() {
+            foodToggleBtn.classList.toggle('active');
+            foodButtonBox.classList.toggle('open');
+        };
     </script>
 
 </body>
