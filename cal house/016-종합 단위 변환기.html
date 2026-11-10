@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>종합 단위 변환기 | UnitGuru 스타일</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Pretendard / Noto Sans KR -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        /* Custom scrollbar for category tabs */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Header Navigation -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-emerald-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-md">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-black text-gray-900 tracking-tight">종합 단위 변환기</h1>
+                    <p class="text-xs text-gray-500">길이, 무게, 넓이, 온도 등 일상 및 전문 단위 실시간 변환</p>
+                </div>
+            </div>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                <i class="fa-solid fa-bolt text-emerald-500 mr-1"></i> 실시간 자동계산
+            </span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto px-4 py-8 flex-grow w-full">
+        
+        <!-- Category Navigation Tabs (Scrollable on Mobile) -->
+        <div class="flex space-x-2 overflow-x-auto no-scrollbar pb-3 mb-6 border-b border-gray-200">
+            <button onclick="switchCategory('length')" id="btn-length" class="category-btn flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all bg-emerald-600 text-white shadow-md">
+                <i class="fa-solid fa-ruler"></i> <span>길이</span>
+            </button>
+            <button onclick="switchCategory('weight')" id="btn-weight" class="category-btn flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all bg-white text-gray-600 hover:bg-gray-100 border border-gray-200">
+                <i class="fa-solid fa-weight-scale"></i> <span>질량/무게</span>
+            </button>
+            <button onclick="switchCategory('area')" id="btn-area" class="category-btn flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all bg-white text-gray-600 hover:bg-gray-100 border border-gray-200">
+                <i class="fa-solid fa-vector-square"></i> <span>넓이(면적)</span>
+            </button>
+            <button onclick="switchCategory('volume')" id="btn-volume" class="category-btn flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all bg-white text-gray-600 hover:bg-gray-100 border border-gray-200">
+                <i class="fa-solid fa-cube"></i> <span>부피</span>
+            </button>
+            <button onclick="switchCategory('temperature')" id="btn-temperature" class="category-btn flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all bg-white text-gray-600 hover:bg-gray-100 border border-gray-200">
+                <i class="fa-solid fa-temperature-three-quarters"></i> <span>온도</span>
+            </button>
+            <button onclick="switchCategory('speed')" id="btn-speed" class="category-btn flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all bg-white text-gray-600 hover:bg-gray-100 border border-gray-200">
+                <i class="fa-solid fa-gauge-high"></i> <span>속도</span>
+            </button>
+            <button onclick="switchCategory('time')" id="btn-time" class="category-btn flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all bg-white text-gray-600 hover:bg-gray-100 border border-gray-200">
+                <i class="fa-regular fa-clock"></i> <span>시간</span>
+            </button>
+            <button onclick="switchCategory('data')" id="btn-data" class="category-btn flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all bg-white text-gray-600 hover:bg-gray-100 border border-gray-200">
+                <i class="fa-solid fa-database"></i> <span>데이터</span>
+            </button>
+        </div>
+
+        <!-- Converter Card Box -->
+        <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 space-y-6">
+            
+            <div class="flex justify-between items-center border-b border-gray-100 pb-4">
+                <h2 id="currentCategoryTitle" class="text-xl font-black text-gray-900 flex items-center gap-2">
+                    <i class="fa-solid fa-ruler text-emerald-600"></i> 길이 변환기
+                </h2>
+                <button onclick="resetValues()" class="text-xs text-gray-400 hover:text-gray-600 font-bold flex items-center gap-1 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
+                    <i class="fa-solid fa-rotate-right"></i> 초기화
+                </button>
+            </div>
+
+            <!-- Input & Output Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                
+                <!-- From Section (Source) -->
+                <div class="space-y-3 bg-slate-50 p-5 rounded-2xl border border-gray-200">
+                    <label class="block font-bold text-gray-700 text-sm">입력 (From)</label>
+                    <div class="relative">
+                        <input type="text" id="inputValue" value="1" oninput="convert()" 
+                               class="w-full text-2xl font-black text-gray-900 px-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">단위 선택</label>
+                        <select id="fromUnit" onchange="convert()" class="w-full font-bold text-gray-800 p-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <!-- Dynamically populated -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Swap Button Center -->
+                <div class="flex justify-center -my-3 md:my-0">
+                    <button onclick="swapUnits()" class="w-12 h-12 bg-white border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 rounded-full flex items-center justify-center shadow-md transition transform hover:rotate-180 duration-300">
+                        <i class="fa-solid fa-right-left text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- To Section (Target) -->
+                <div class="space-y-3 bg-emerald-50/50 p-5 rounded-2xl border border-emerald-200">
+                    <label class="block font-bold text-emerald-900 text-sm">결과 (To)</label>
+                    <div class="relative">
+                        <input type="text" id="outputValue" readonly 
+                               class="w-full text-2xl font-black text-emerald-900 px-4 py-3 bg-white border border-emerald-300 rounded-xl focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-emerald-700 mb-1">변환할 단위 선택</label>
+                        <select id="toUnit" onchange="convert()" class="w-full font-bold text-gray-800 p-3 bg-white border border-emerald-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <!-- Dynamically populated -->
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Quick Conversion Reference Table / Common Conversions -->
+            <div class="pt-6 border-t border-gray-100">
+                <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-1.5">
+                    <i class="fa-solid fa-list text-emerald-600"></i> 주요 단위 빠른 참조값
+                </h3>
+                <div id="quickReferenceGrid" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Info Description Banner -->
+        <div class="mt-8 bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl shadow-sm flex items-start space-x-3">
+            <i class="fa-solid fa-lightbulb text-amber-500 text-xl mt-0.5"></i>
+            <div class="text-sm text-amber-900">
+                <strong class="font-bold text-amber-950">단위 변환기 활용 팁</strong><br/>
+                입력란에 숫자를 입력하거나 단위를 변경하면 별도의 버튼 클릭 없이 실시간으로 즉시 변환 결과가 반영됩니다. 화살표 버튼을 누르면 입력 단위와 결과 단위를 서로 바꿀 수 있습니다.
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 py-6 mt-12 text-center text-xs text-gray-500">
+        <div class="max-w-4xl mx-auto px-4">
+            <p>© 2026 종합 단위 변환기 (UnitGuru Style). All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Conversion Engine Script -->
+    <script>
+        // 단위 정의 데이터셋
+        const unitData = {
+            length: {
+                title: "길이 변환기",
+                icon: "fa-ruler",
+                base: "m", // 기준 단위
+                units: {
+                    mm: { name: "밀리미터 (mm)", ratio: 0.001 },
+                    cm: { name: "센티미터 (cm)", ratio: 0.01 },
+                    m: { name: "미터 (m)", ratio: 1 },
+                    km: { name: "킬로미터 (km)", ratio: 1000 },
+                    in: { name: "인치 (in)", ratio: 0.0254 },
+                    ft: { name: "피트 (ft)", ratio: 0.3048 },
+                    yd: { name: "야드 (yd)", ratio: 0.9144 },
+                    mi: { name: "마일 (mi)", ratio: 1609.344 },
+                    shaku: { name: "척 (자)", ratio: 0.303 },
+                    ri: { name: "리 (ri)", ratio: 3927.27 }
+                },
+                defaultFrom: "m",
+                defaultTo: "cm"
+            },
+            weight: {
+                title: "질량/무게 변환기",
+                icon: "fa-weight-scale",
+                base: "g",
+                units: {
+                    mg: { name: "밀리그램 (mg)", ratio: 0.001 },
+                    g: { name: "그램 (g)", ratio: 1 },
+                    kg: { name: "킬로그램 (kg)", ratio: 1000 },
+                    t: { name: "톤 (t)", ratio: 1000000 },
+                    kt: { name: "킬로톤 (kt)", ratio: 1000000000 },
+                    oz: { name: "온스 (oz)", ratio: 28.3495 },
+                    lb: { name: "파운드 (lb)", ratio: 453.592 },
+                    don: { name: "돈 (금 무게)", ratio: 3.75 },
+                    근: { name: "근 (고기/채소)", ratio: 600 }
+                },
+                defaultFrom: "kg",
+                defaultTo: "g"
+            },
+            area: {
+                title: "넓이(면적) 변환기",
+                icon: "fa-vector-square",
+                base: "m2",
+                units: {
+                    m2: { name: "제곱미터 (㎡)", ratio: 1 },
+                    km2: { name: "제곱킬로미터 (㎢)", ratio: 1000000 },
+                    ha: { name: "헥타르 (ha)", ratio: 10000 },
+                    a: { name: "아르 (a)", ratio: 100 },
+                    pyeong: { name: "평", ratio: 3.305785 },
+                    ft2: { name: "제곱피트 (sq ft)", ratio: 0.092903 },
+                    ac: { name: "에이커 (ac)", ratio: 4046.86 }
+                },
+                defaultFrom: "pyeong",
+                defaultTo: "m2"
+            },
+            volume: {
+                title: "부피 변환기",
+                icon: "fa-cube",
+                base: "l",
+                units: {
+                    cc: { name: "세제곱센티미터 (cc / mL)", ratio: 0.001 },
+                    l: { name: "리터 (L)", ratio: 1 },
+                    m3: { name: "세제곱미터 (㎥)", ratio: 1000 },
+                    gal: { name: "갤런 (gal)", ratio: 3.78541 },
+                    qt: { name: "쿼트 (qt)", ratio: 0.946353 },
+                    floz: { name: "온스 (fl oz)", ratio: 0.0295735 }
+                },
+                defaultFrom: "l",
+                defaultTo: "cc"
+            },
+            temperature: {
+                title: "온도 변환기",
+                icon: "fa-temperature-three-quarters",
+                base: "c",
+                isSpecial: true,
+                units: {
+                    c: { name: "섭씨 (°C)" },
+                    f: { name: "화씨 (°F)" },
+                    k: { name: "켈빈 (K)" }
+                },
+                defaultFrom: "c",
+                defaultTo: "f"
+            },
+            speed: {
+                title: "속도 변환기",
+                icon: "fa-gauge-high",
+                base: "mps",
+                units: {
+                    mps: { name: "미터 초 (m/s)", ratio: 1 },
+                    kmh: { name: "킬로미터 시 (km/h)", ratio: 1 / 3.6 },
+                    mph: { name: "마일 시 (mph)", ratio: 0.44704 },
+                    knot: { name: "노트 (knot)", ratio: 0.514444 },
+                    mach: { name: "마하 (Mach)", ratio: 340 }
+                },
+                defaultFrom: "kmh",
+                defaultTo: "mph"
+            },
+            time: {
+                title: "시간 변환기",
+                icon: "fa-regular fa-clock",
+                base: "sec",
+                units: {
+                    ms: { name: "밀리초 (ms)", ratio: 0.001 },
+                    sec: { name: "초 (s)", ratio: 1 },
+                    min: { name: "분 (min)", ratio: 60 },
+                    h: { name: "시간 (h)", ratio: 3600 },
+                    d: { name: "일 (day)", ratio: 86400 },
+                    w: { name: "주 (week)", ratio: 604800 },
+                    y: { name: "년 (year)", ratio: 31536000 }
+                },
+                defaultFrom: "h",
+                defaultTo: "min"
+            },
+            data: {
+                title: "데이터 저장소 변환기",
+                icon: "fa-database",
+                base: "byte",
+                units: {
+                    bit: { name: "비트 (bit)", ratio: 0.125 },
+                    byte: { name: "바이트 (B)", ratio: 1 },
+                    kb: { name: "킬로바이트 (KB)", ratio: 1024 },
+                    mb: { name: "메가바이트 (MB)", ratio: 1048576 },
+                    gb: { name: "기가바이트 (GB)", ratio: 1073741824 },
+                    tb: { name: "테라바이트 (TB)", ratio: 1099511627776 },
+                    pb: { name: "페타바이트 (PB)", ratio: 1125899906842624 }
+                },
+                defaultFrom: "gb",
+                defaultTo: "mb"
+            }
+        };
+
+        let currentCategory = 'length';
+
+        window.onload = function() {
+            switchCategory('length');
+        };
+
+        function switchCategory(categoryKey) {
+            currentCategory = categoryKey;
+
+            // Update button styles
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.className = "category-btn flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all bg-white text-gray-600 hover:bg-gray-100 border border-gray-200";
+            });
+            const activeBtn = document.getElementById('btn-' + categoryKey);
+            activeBtn.className = "category-btn flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all bg-emerald-600 text-white shadow-md";
+
+            const data = unitData[categoryKey];
+            document.getElementById('currentCategoryTitle').innerHTML = `<i class="fa-solid ${data.icon} text-emerald-600"></i> ${data.title}`;
+
+            // Populate Select options
+            const fromSelect = document.getElementById('fromUnit');
+            const toSelect = document.getElementById('toUnit');
+            fromSelect.innerHTML = '';
+            toSelect.innerHTML = '';
+
+            for (let [key, val] of Object.entries(data.units)) {
+                fromSelect.options.add(new Option(val.name, key));
+                toSelect.options.add(new Option(val.name, key));
+            }
+
+            fromSelect.value = data.defaultFrom;
+            toSelect.value = data.defaultTo;
+            document.getElementById('inputValue').value = "1";
+
+            convert();
+        }
+
+        function convert() {
+            const data = unitData[currentCategory];
+            const rawVal = document.getElementById('inputValue').value;
+            const val = parseFloat(rawVal);
+            const from = document.getElementById('fromUnit').value;
+            const to = document.getElementById('toUnit').value;
+            const outputField = document.getElementById('outputValue');
+
+            if (isNaN(val)) {
+                outputField.value = "0";
+                updateQuickReferences(0);
+                return;
+            }
+
+            let result = 0;
+
+            if (data.isSpecial) {
+                // 온도 변환 로직 전용
+                result = convertTemperature(val, from, to);
+            } else {
+                // 일반 비율 기반 변환
+                const baseVal = val * data.units[from].ratio;
+                result = baseVal / data.units[to].ratio;
+            }
+
+            // 가독성을 위한 포맷팅
+            outputField.value = formatNumber(result);
+            updateQuickReferences(val, from);
+        }
+
+        function convertTemperature(val, from, to) {
+            let celsius = val;
+            // Convert to Celsius first
+            if (from === 'f') celsius = (val - 32) * 5 / 9;
+            else if (from === 'k') celsius = val - 273.15;
+
+            // Convert from Celsius to Target
+            if (to === 'c') return celsius;
+            if (to === 'f') return (celsius * 9 / 5) + 32;
+            if (to === 'k') return celsius + 273.15;
+            return celsius;
+        }
+
+        function swapUnits() {
+            const fromSelect = document.getElementById('fromUnit');
+            const toSelect = document.getElementById('toUnit');
+            const temp = fromSelect.value;
+            fromSelect.value = toSelect.value;
+            toSelect.value = temp;
+            convert();
+        }
+
+        function resetValues() {
+            document.getElementById('inputValue').value = "1";
+            convert();
+        }
+
+        function formatNumber(num) {
+            if (Math.abs(num) < 0.000001 && num !== 0) {
+                return num.toExponential(4);
+            }
+            if (Number.isInteger(num)) {
+                return num.toLocaleString();
+            }
+            // 소수점 이하 자리수 최적화 표기
+            return parseFloat(num.toFixed(6)).toLocaleString();
+        }
+
+        function updateQuickReferences(val, currentFrom) {
+            const grid = document.getElementById('quickReferenceGrid');
+            grid.innerHTML = '';
+            const data = unitData[currentCategory];
+            const keys = Object.keys(data.units);
+
+            // 입력값을 기준 단위로 환산
+            let baseVal = val;
+            if (data.isSpecial) {
+                let celsius = val;
+                if (currentFrom === 'f') celsius = (val - 32) * 5 / 9;
+                else if (currentFrom === 'k') celsius = val - 273.15;
+                baseVal = celsius; // reference base for temp
+            } else {
+                baseVal = val * (data.units[currentFrom] ? data.units[currentFrom].ratio : 1);
+            }
+
+            keys.slice(0, 4).forEach(key => {
+                let converted = 0;
+                if (data.isSpecial) {
+                    converted = convertTemperature(val, currentFrom, key);
+                } else {
+                    converted = baseVal / data.units[key].ratio;
+                }
+
+                const card = document.createElement('div');
+                card.className = "bg-slate-50 p-3 rounded-xl border border-gray-200 text-center";
+                card.innerHTML = `
+                    <div class="text-gray-500 font-semibold mb-1 truncate">${data.units[key].name}</div>
+                    <div class="font-black text-gray-900 text-sm truncate">${formatNumber(converted)}</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
