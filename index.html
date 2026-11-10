@@ -145,6 +145,66 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* ===== 모바일용 계산기 오버레이 =====
+           모바일에서는 새 창(팝업)이 지원되지 않으므로,
+           index.html을 뒤에 그대로 둔 채 전체화면으로 덮어서 띄운다. */
+        .calc-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 100vh;      /* 구형 브라우저용 */
+            height: 100dvh;     /* iOS 주소창 변화에 대응 */
+            display: none;
+            background-color: var(--bg-color);
+            z-index: 1000;
+        }
+
+        .calc-overlay.open {
+            display: block;
+        }
+
+        .calc-overlay iframe {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border: 0;
+            background-color: #FFFFFF;
+        }
+
+        /* 우측 상단 닫기(X) 버튼 */
+        .calc-close-btn {
+            position: absolute;
+            top: calc(10px + env(safe-area-inset-top));
+            right: calc(12px + env(safe-area-inset-right));
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.95);
+            color: var(--text-main);
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 1001;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .calc-close-btn:active {
+            background-color: var(--border-color);
+        }
+
+        /* 오버레이가 열린 동안 배경 페이지는 스크롤하지 않음 */
+        body.overlay-open {
+            overflow: hidden;
+        }
     </style>
 </head>
 <body>
@@ -183,6 +243,12 @@
         </div>
     </div>
 
+    <!-- 모바일 전용: 계산기를 덮어서 띄우는 전체화면 오버레이 -->
+    <div class="calc-overlay" id="calcOverlay" aria-hidden="true">
+        <iframe id="calcFrame" title="계산기" loading="eager"></iframe>
+        <button type="button" class="calc-close-btn" id="calcCloseBtn" aria-label="계산기 닫기">&#10005;</button>
+    </div>
+
     <script>
         // 1. 일반 금융/생활 계산기 목록 데이터
         const utilityFileList = [
@@ -216,13 +282,88 @@
         const foodButtonBox = document.getElementById('foodButtonBox');
         const foodToggleBtn = document.getElementById('foodToggleBtn');
 
+        /* ===== 계산기 열기 / 닫기 ===== */
+        const calcOverlay = document.getElementById('calcOverlay');
+        const calcFrame = document.getElementById('calcFrame');
+        const calcCloseBtn = document.getElementById('calcCloseBtn');
+
+        let overlayHistoryPushed = false;
+
+        // 모바일(또는 좁은 화면)인지 매번 확인
+        function isMobileView() {
+            const ua = navigator.userAgent;
+            const isMobileUA = /iPhone|iPad|iPod|Android/i.test(ua);
+            const isNarrow = window.matchMedia('(max-width: 768px)').matches;
+            return isMobileUA || isNarrow;
+        }
+
+        function openCalculator(fileName) {
+            if (!fileName || fileName === '#') {
+                alert("해당 기능은 추후 업데이트될 예정입니다!");
+                return;
+            }
+
+            // PC: 지금까지처럼 별도 팝업 창 (창 크기 지정이 먹히는 데스크톱 전용)
+            if (!isMobileView()) {
+                window.open(fileName, '_blank', 'width=1400,height=1000,scrollbars=yes');
+                return;
+            }
+
+            // 모바일: index.html을 뒤에 남겨두고 오버레이로 덮는다
+            calcFrame.src = fileName;
+            calcOverlay.classList.add('open');
+            calcOverlay.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('overlay-open');
+
+            // 안드로이드 뒤로가기 / iOS 스와이프 뒤로가기로 오버레이만 닫히도록
+            if (!overlayHistoryPushed) {
+                history.pushState({ calcOverlay: true }, '');
+                overlayHistoryPushed = true;
+            }
+
+            calcCloseBtn.focus();
+        }
+
+        function closeCalculator(fromPopState) {
+            if (!calcOverlay.classList.contains('open')) {
+                overlayHistoryPushed = false;
+                return;
+            }
+
+            calcOverlay.classList.remove('open');
+            calcOverlay.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('overlay-open');
+            calcFrame.src = 'about:blank';   // 계산기 중지 및 메모리 해제
+
+            if (!fromPopState && overlayHistoryPushed) {
+                overlayHistoryPushed = false;
+                history.back();              // 위에서 pushState 한 항목 제거
+            } else {
+                overlayHistoryPushed = false;
+            }
+        }
+
+        calcCloseBtn.onclick = function () {
+            closeCalculator(false);
+        };
+
+        window.addEventListener('popstate', function () {
+            closeCalculator(true);
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeCalculator(false);
+            }
+        });
+
         // 첫 번째 카테고리 목록 동적 생성
         utilityFileList.forEach((item) => {
             const button = document.createElement('button');
             button.className = 'file-btn';
             button.innerHTML = `<span class="btn-title">${item.label}</span>`;
             button.onclick = function() {
-                window.open(item.fileName, '_blank', 'width=1400,height=1000,scrollbars=yes');
+                openCalculator(item.fileName);
             };
             buttonBox.appendChild(button);
         });
@@ -233,11 +374,7 @@
             button.className = 'file-btn';
             button.innerHTML = `<span class="btn-title">${item.label}</span>`;
             button.onclick = function() {
-                if (item.fileName !== '#') {
-                    window.open(item.fileName, '_blank', 'width=1400,height=1000,scrollbars=yes');
-                } else {
-                    alert("해당 기능은 추후 업데이트될 예정입니다!");
-                }
+                openCalculator(item.fileName);
             };
             foodButtonBox.appendChild(button);
         });
