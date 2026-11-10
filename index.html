@@ -25,7 +25,7 @@
         }
 
         .container {
-            max-width: 700px;
+            max-width: 900px;
             margin: 0 auto;
         }
 
@@ -99,16 +99,17 @@
         /* 서브 계산기 목록을 감싸는 컨테이너 (기본 숨김 처리) */
         .sub-button-container {
             display: none;
-            flex-direction: column;
-            gap: 10px;
             padding-left: 15px;
             border-left: 2px solid var(--border-color);
             margin-top: 10px;
             margin-bottom: 10px;
         }
 
+        /* 펼쳐졌을 때 2줄(2열) 그리드로 나열 */
         .sub-button-container.open {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
         }
 
         /* 개별 파일 링크 버튼 (제목만 표시) */
@@ -117,6 +118,7 @@
             border: 1px solid var(--border-color);
             padding: 16px 20px;
             width: 100%;
+            height: 100%;
             text-align: left;
             cursor: pointer;
             border-radius: 4px;
@@ -135,13 +137,21 @@
             font-weight: 500;
             color: var(--text-main);
         }
+
+        /* 좁은 화면(모바일)에서는 1줄로 자동 전환 */
+        @media (max-width: 600px) {
+            body { padding: 40px 20px; }
+            .sub-button-container.open {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
         <header>
-            <h1>유틸리티 포털</h1>
+            <h1>계산 포털</h1>
             <p>원하시는 카테고리를 선택하여 필요한 도구를 이용하세요. 정부 정책 및 법령 변화에 따라 변수가 생길 수 있습니다.</p>
         </header>
 
@@ -155,7 +165,7 @@
                     <span class="arrow-icon">▼</span>
                 </button>
                 
-                <!-- 세로로 펼쳐지는 계산기 서브 목록 공간 -->
+                <!-- 2열로 펼쳐지는 계산기 서브 목록 공간 -->
                 <div class="sub-button-container" id="buttonBox"></div>
             </div>
 
@@ -196,7 +206,7 @@
         const foodFileList = [
             { label: "쉬운 비율 계산기", fileName: "cal house/015-쉬운 비율 계산기.html" },
             { label: "종합 단위 변환기", fileName: "cal house/016-종합 단위 변환기.html" },
-			{ label: "(계속 준비중)", fileName: "#" }
+            { label: "(계속 준비중)", fileName: "#" }
         ];
 
         const buttonBox = document.getElementById('buttonBox');
@@ -216,7 +226,7 @@
             buttonBox.appendChild(button);
         });
 
-        // 두 번째 "음식 칼로리 보기" 카테고리 목록 동적 생성 (추후 확장 대비)
+        // 두 번째 카테고리 목록 동적 생성 (추후 확장 대비)
         foodFileList.forEach((item) => {
             const button = document.createElement('button');
             button.className = 'file-btn';
@@ -231,13 +241,13 @@
             foodButtonBox.appendChild(button);
         });
 
-        // "편리한 계산기 모음" 메인 버튼 토글 기능
+        // "생활속 계산기 모음" 메인 버튼 토글 기능
         calcToggleBtn.onclick = function() {
             calcToggleBtn.classList.toggle('active');
             buttonBox.classList.toggle('open');
         };
 
-        // "음식 칼로리 보기" 메인 버튼 토글 기능
+        // "편리한 계산기 모음" 메인 버튼 토글 기능
         foodToggleBtn.onclick = function() {
             foodToggleBtn.classList.toggle('active');
             foodButtonBox.classList.toggle('open');
