@@ -245,7 +245,8 @@ Invoke-RestMethod -Uri "https://easy-calculator-gemini.myid.workers.dev/" `
 | `카메라 권한이 거부되었습니다` | 6번 항목 참고 (HTTPS, Safari 설정, 사이트 권한) |
 | 카메라 화면이 검게 나옴 | 다른 앱이 카메라 사용 중인지 확인, 페이지 새로고침 |
 | `AI 사용량이 잠시 초과되었습니다` | Gemini 무료 할당량 초과. 잠시 후 재시도 또는 결제/할당량 확인 |
-| `model ... is not found` / 모델 오류 | Worker 변수 `GEMINI_MODEL`에 계정에서 사용 가능한 모델명을 지정하세요. 예: `gemini-2.5-flash`, `gemini-2.5-flash-lite`, 또는 최신 flash 모델 |
+| `model ... is not found` / 모델 오류 | Worker 변수 `GEMINI_MODEL`에 계정에서 사용 가능한 모델명을 지정하세요. 예: `gemini-3.8-flash`, `gemini-2.5-flash`, `gemini-2.5-flash-lite` |
+| `... is no longer available to new users` | Gemini가 해당 모델의 신규 사용을 중단한 경우입니다. 오류 메시지가 알려주는 최신 모델명(예: `gemini-3.8-flash`)을 `GEMINI_MODEL` 변수에 지정하세요. |
 | 사진 분석이 계속 실패 | Worker 로그(Cloudflare → Worker → Logs)에서 Gemini 오류 확인 |
 
 ---

@@ -243,7 +243,32 @@ export default {
       );
     }
 
-    const model = (env.GEMINI_MODEL || "gemini-2.5-flash").trim();
+    // 변수에 "models/gemini-3.8-flash", "Gemini 3.8 Flash", "gemini-3.8-flash (최신)" 처럼
+    // 입력해도 모델명만 뽑아내도록 보정합니다.
+    const rawModel = String(env.GEMINI_MODEL || "gemini-3.8-flash");
+    const normalized = rawModel
+      .trim()
+      .replace(/^models\//i, "")
+      .replace(/\s+/g, "-")
+      .toLowerCase();
+    const matched = normalized.match(/gemini[a-z0-9.\-]*/);
+    const model = (matched ? matched[0] : normalized)
+      .replace(/_/g, "-")
+      .replace(/-+$/, "");
+
+    if (!/^[a-z0-9][a-z0-9.\-]*$/.test(model)) {
+      return jsonResponse(
+        {
+          error:
+            "GEMINI_MODEL 값이 올바르지 않습니다. 예: gemini-3.8-flash (입력값: " +
+            rawModel.trim().slice(0, 60) +
+            ")"
+        },
+        500,
+        corsHeaders
+      );
+    }
+
     const endpoint =
       "https://generativelanguage.googleapis.com/v1beta/models/" +
       encodeURIComponent(model) +
@@ -273,26 +298,45 @@ export default {
       geminiBody.generationConfig.thinkingConfig = { thinkingBudget: 0 };
     }
 
-    let geminiResponse;
-    try {
-      geminiResponse = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": env.GEMINI_API_KEY
-        },
-        body: JSON.stringify(geminiBody)
-      });
-    } catch (err) {
-      console.error("Gemini fetch error:", err);
-      return jsonResponse(
-        { error: "Gemini API에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요." },
-        502,
-        corsHeaders
-      );
-    }
+    // Gemini가 일시적으로 혼잡(503/429)할 때 한 번 더 시도합니다.
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    const geminiText = await geminiResponse.text();
+    let geminiResponse;
+    let geminiText = "";
+
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        geminiResponse = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": env.GEMINI_API_KEY
+          },
+          body: JSON.stringify(geminiBody)
+        });
+      } catch (err) {
+        console.error("Gemini fetch error:", err);
+        if (attempt === 0) {
+          await sleep(700);
+          continue;
+        }
+        return jsonResponse(
+          { error: "Gemini API에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요." },
+          502,
+          corsHeaders
+        );
+      }
+
+      geminiText = await geminiResponse.text();
+
+      if (geminiResponse.ok || (geminiResponse.status !== 429 && geminiResponse.status !== 503)) {
+        break;
+      }
+
+      if (attempt === 0) {
+        await sleep(900);
+      }
+    }
 
     if (!geminiResponse.ok) {
       console.error("Gemini API error:", geminiResponse.status, geminiText);
@@ -303,10 +347,20 @@ export default {
         detail = (parsed && parsed.error && parsed.error.message) || "";
       } catch (_) {}
 
+      const busy = /high demand|overloaded|temporarily|unavailable/i.test(detail);
+
       if (geminiResponse.status === 429) {
         return jsonResponse(
-          { error: "AI 사용량이 잠시 초과되었습니다. 잠시 후 다시 시도해 주세요." },
+          { error: "AI 사용량이 잠시 초과되었습니다. 1~2분 후 다시 시도해 주세요." },
           429,
+          corsHeaders
+        );
+      }
+
+      if (geminiResponse.status === 503 || busy) {
+        return jsonResponse(
+          { error: "AI가 지금 잠시 혼잡합니다. 1~2분 후 다시 시도해 주세요." },
+          503,
           corsHeaders
         );
       }
