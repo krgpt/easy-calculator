@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>건강 관련 계산기</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+    .calc-panel { display: none; }
+    .calc-panel.active { display: block; }
+    .btn-calc.active { background-color: #0d9488; color: white; border-color: #0d9488; }
+    .result-box { background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%); }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- 헤더 -->
+    <header class="text-center mb-8">
+      <h1 class="text-3xl md:text-4xl font-bold text-teal-700 mb-2">건강 관련 계산기</h1>
+      <p class="text-slate-500 text-sm">BMI · 기초대사량 · 칼로리 · 체지방 · 수분 · 단백질 · 운동 · 임신 · 배란</p>
+    </header>
+
+    <!-- 계산기 선택 버튼 -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mb-8">
+      <button onclick="showCalc('bmi')" class="btn-calc px-3 py-3 rounded-xl border-2 border-teal-200 bg-white text-sm font-medium hover:bg-teal-50 transition active" data-target="bmi">BMI 계산기</button>
+      <button onclick="showCalc('bmr')" class="btn-calc px-3 py-3 rounded-xl border-2 border-teal-200 bg-white text-sm font-medium hover:bg-teal-50 transition" data-target="bmr">기초대사량 계산기</button>
+      <button onclick="showCalc('tdee')" class="btn-calc px-3 py-3 rounded-xl border-2 border-teal-200 bg-white text-sm font-medium hover:bg-teal-50 transition" data-target="tdee">하루 권장 칼로리</button>
+      <button onclick="showCalc('diet')" class="btn-calc px-3 py-3 rounded-xl border-2 border-teal-200 bg-white text-sm font-medium hover:bg-teal-50 transition" data-target="diet">다이어트 목표 체중</button>
+      <button onclick="showCalc('bodyfat')" class="btn-calc px-3 py-3 rounded-xl border-2 border-teal-200 bg-white text-sm font-medium hover:bg-teal-50 transition" data-target="bodyfat">체지방률 계산기</button>
+      <button onclick="showCalc('water')" class="btn-calc px-3 py-3 rounded-xl border-2 border-teal-200 bg-white text-sm font-medium hover:bg-teal-50 transition" data-target="water">하루 물 섭취량</button>
+      <button onclick="showCalc('protein')" class="btn-calc px-3 py-3 rounded-xl border-2 border-teal-200 bg-white text-sm font-medium hover:bg-teal-50 transition" data-target="protein">단백질 섭취량</button>
+      <button onclick="showCalc('exercise')" class="btn-calc px-3 py-3 rounded-xl border-2 border-teal-200 bg-white text-sm font-medium hover:bg-teal-50 transition" data-target="exercise">운동 칼로리</button>
+      <button onclick="showCalc('pregnancy')" class="btn-calc px-3 py-3 rounded-xl border-2 border-teal-200 bg-white text-sm font-medium hover:bg-teal-50 transition" data-target="pregnancy">임신 주수 계산기</button>
+      <button onclick="showCalc('ovulation')" class="btn-calc px-3 py-3 rounded-xl border-2 border-teal-200 bg-white text-sm font-medium hover:bg-teal-50 transition" data-target="ovulation">배란일 계산기</button>
+    </div>
+
+    <!-- 계산기 패널들 -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-slate-100">
+
+      <!-- 1. BMI -->
+      <div id="bmi" class="calc-panel active">
+        <h2 class="text-xl font-bold text-teal-700 mb-1">BMI 계산기</h2>
+        <p class="text-sm text-slate-500 mb-5">체질량지수 (대한비만학회 기준)</p>
+        <div class="grid sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">키 (cm)</label>
+            <input type="number" id="bmi-height" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-400 outline-none" placeholder="예: 170">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">체중 (kg)</label>
+            <input type="number" id="bmi-weight" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-400 outline-none" placeholder="예: 65">
+          </div>
+        </div>
+        <button onclick="calcBMI()" class="w-full bg-teal-600 text-white py-2.5 rounded-lg font-medium hover:bg-teal-700 transition">계산하기</button>
+        <div id="bmi-result" class="mt-5 hidden result-box rounded-xl p-4"></div>
+      </div>
+
+      <!-- 2. 기초대사량 -->
+      <div id="bmr" class="calc-panel">
+        <h2 class="text-xl font-bold text-teal-700 mb-1">기초대사량 계산기</h2>
+        <p class="text-sm text-slate-500 mb-5">Mifflin-St Jeor 공식 사용</p>
+        <div class="grid sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">성별</label>
+            <select id="bmr-gender" class="w-full border rounded-lg px-3 py-2">
+              <option value="male">남성</option>
+              <option value="female">여성</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">나이 (세)</label>
+            <input type="number" id="bmr-age" class="w-full border rounded-lg px-3 py-2" placeholder="예: 30">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">키 (cm)</label>
+            <input type="number" id="bmr-height" class="w-full border rounded-lg px-3 py-2" placeholder="예: 170">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">체중 (kg)</label>
+            <input type="number" id="bmr-weight" class="w-full border rounded-lg px-3 py-2" placeholder="예: 65">
+          </div>
+        </div>
+        <button onclick="calcBMR()" class="w-full bg-teal-600 text-white py-2.5 rounded-lg font-medium hover:bg-teal-700 transition">계산하기</button>
+        <div id="bmr-result" class="mt-5 hidden result-box rounded-xl p-4"></div>
+      </div>
+
+      <!-- 3. 하루 권장 칼로리 -->
+      <div id="tdee" class="calc-panel">
+        <h2 class="text-xl font-bold text-teal-700 mb-1">하루 권장 칼로리 계산기</h2>
+        <p class="text-sm text-slate-500 mb-5">기초대사량 × 활동계수 (TDEE)</p>
+        <div class="grid sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">성별</label>
+            <select id="tdee-gender" class="w-full border rounded-lg px-3 py-2">
+              <option value="male">남성</option>
+              <option value="female">여성</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">나이 (세)</label>
+            <input type="number" id="tdee-age" class="w-full border rounded-lg px-3 py-2" placeholder="예: 30">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">키 (cm)</label>
+            <input type="number" id="tdee-height" class="w-full border rounded-lg px-3 py-2" placeholder="예: 170">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">체중 (kg)</label>
+            <input type="number" id="tdee-weight" class="w-full border rounded-lg px-3 py-2" placeholder="예: 65">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium mb-1">활동 수준</label>
+            <select id="tdee-activity" class="w-full border rounded-lg px-3 py-2">
+              <option value="1.2">거의 운동 안 함 (앉아서 일함)</option>
+              <option value="1.375">가벼운 운동 (주 1~3회)</option>
+              <option value="1.55" selected>보통 운동 (주 3~5회)</option>
+              <option value="1.725">적극적 운동 (주 6~7회)</option>
+              <option value="1.9">매우 격렬한 운동 / 육체노동</option>
+            </select>
+          </div>
+        </div>
+        <button onclick="calcTDEE()" class="w-full bg-teal-600 text-white py-2.5 rounded-lg font-medium hover:bg-teal-700 transition">계산하기</button>
+        <div id="tdee-result" class="mt-5 hidden result-box rounded-xl p-4"></div>
+      </div>
+
+      <!-- 4. 다이어트 목표 체중 -->
+      <div id="diet" class="calc-panel">
+        <h2 class="text-xl font-bold text-teal-700 mb-1">다이어트 목표 체중 계산기</h2>
+        <p class="text-sm text-slate-500 mb-5">목표 체중 도달 예상 기간 및 일일 칼로리 권장량</p>
+        <div class="grid sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">성별</label>
+            <select id="diet-gender" class="w-full border rounded-lg px-3 py-2">
+              <option value="male">남성</option>
+              <option value="female">여성</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">나이 (세)</label>
+            <input type="number" id="diet-age" class="w-full border rounded-lg px-3 py-2" placeholder="예: 30">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">키 (cm)</label>
+            <input type="number" id="diet-height" class="w-full border rounded-lg px-3 py-2" placeholder="예: 170">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">현재 체중 (kg)</label>
+            <input type="number" id="diet-current" class="w-full border rounded-lg px-3 py-2" placeholder="예: 70">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">목표 체중 (kg)</label>
+            <input type="number" id="diet-goal" class="w-full border rounded-lg px-3 py-2" placeholder="예: 62">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">주당 감량 목표</label>
+            <select id="diet-rate" class="w-full border rounded-lg px-3 py-2">
+              <option value="0.25">주 0.25kg (완만)</option>
+              <option value="0.5" selected>주 0.5kg (권장)</option>
+              <option value="0.75">주 0.75kg</option>
+              <option value="1">주 1kg (빠른 감량)</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium mb-1">활동 수준</label>
+            <select id="diet-activity" class="w-full border rounded-lg px-3 py-2">
+              <option value="1.2">거의 운동 안 함</option>
+              <option value="1.375">가벼운 운동 (주 1~3회)</option>
+              <option value="1.55" selected>보통 운동 (주 3~5회)</option>
+              <option value="1.725">적극적 운동 (주 6~7회)</option>
+              <option value="1.9">매우 격렬한 운동</option>
+            </select>
+          </div>
+        </div>
+        <button onclick="calcDiet()" class="w-full bg-teal-600 text-white py-2.5 rounded-lg font-medium hover:bg-teal-700 transition">계산하기</button>
+        <div id="diet-result" class="mt-5 hidden result-box rounded-xl p-4"></div>
+      </div>
+
+      <!-- 5. 체지방률 -->
+      <div id="bodyfat" class="calc-panel">
+        <h2 class="text-xl font-bold text-teal-700 mb-1">체지방률 계산기</h2>
+        <p class="text-sm text-slate-500 mb-5">미국 해군(US Navy) 방법 · 줄자로 측정</p>
+        <div class="grid sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">성별</label>
+            <select id="bf-gender" class="w-full border rounded-lg px-3 py-2" onchange="toggleHip()">
+              <option value="male">남성</option>
+              <option value="female">여성</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">키 (cm)</label>
+            <input type="number" id="bf-height" class="w-full border rounded-lg px-3 py-2" placeholder="예: 170">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">목 둘레 (cm)</label>
+            <input type="number" id="bf-neck" class="w-full border rounded-lg px-3 py-2" placeholder="후두 아래">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">허리 둘레 (cm)</label>
+            <input type="number" id="bf-waist" class="w-full border rounded-lg px-3 py-2" placeholder="배꼽 높이">
+          </div>
+          <div id="bf-hip-wrap" class="hidden sm:col-span-2">
+            <label class="block text-sm font-medium mb-1">엉덩이 둘레 (cm) - 여성만</label>
+            <input type="number" id="bf-hip" class="w-full border rounded-lg px-3 py-2" placeholder="가장 넓은 부분">
+          </div>
+        </div>
+        <button onclick="calcBodyFat()" class="w-full bg-teal-600 text-white py-2.5 rounded-lg font-medium hover:bg-teal-700 transition">계산하기</button>
+        <div id="bf-result" class="mt-5 hidden result-box rounded-xl p-4"></div>
+      </div>
+
+      <!-- 6. 하루 물 섭취량 -->
+      <div id="water" class="calc-panel">
+        <h2 class="text-xl font-bold text-teal-700 mb-1">하루 물 섭취량 계산기</h2>
+        <p class="text-sm text-slate-500 mb-5">체중 기반 참고량 (활동량 반영)</p>
+        <div class="grid sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">체중 (kg)</label>
+            <input type="number" id="water-weight" class="w-full border rounded-lg px-3 py-2" placeholder="예: 65">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">활동 수준</label>
+            <select id="water-activity" class="w-full border rounded-lg px-3 py-2">
+              <option value="30">거의 운동 안 함</option>
+              <option value="33" selected>보통 활동</option>
+              <option value="35">활발한 운동 / 더운 환경</option>
+            </select>
+          </div>
+        </div>
+        <button onclick="calcWater()" class="w-full bg-teal-600 text-white py-2.5 rounded-lg font-medium hover:bg-teal-700 transition">계산하기</button>
+        <div id="water-result" class="mt-5 hidden result-box rounded-xl p-4"></div>
+      </div>
+
+      <!-- 7. 단백질 섭취량 -->
+      <div id="protein" class="calc-panel">
+        <h2 class="text-xl font-bold text-teal-700 mb-1">단백질 섭취량 계산기</h2>
+        <p class="text-sm text-slate-500 mb-5">체중·목표별 권장 단백질 섭취량</p>
+        <div class="grid sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">체중 (kg)</label>
+            <input type="number" id="protein-weight" class="w-full border rounded-lg px-3 py-2" placeholder="예: 65">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">목표 / 활동</label>
+            <select id="protein-goal" class="w-full border rounded-lg px-3 py-2">
+              <option value="0.8">기본 건강 유지 (0.8g/kg)</option>
+              <option value="1.2" selected>일반 활동 / 운동 (1.2g/kg)</option>
+              <option value="1.6">근육 증가 (1.6g/kg)</option>
+              <option value="2.0">고강도 운동 / 감량 중 (2.0g/kg)</option>
+            </select>
+          </div>
+        </div>
+        <button onclick="calcProtein()" class="w-full bg-teal-600 text-white py-2.5 rounded-lg font-medium hover:bg-teal-700 transition">계산하기</button>
+        <div id="protein-result" class="mt-5 hidden result-box rounded-xl p-4"></div>
+      </div>
+
+      <!-- 8. 운동 칼로리 -->
+      <div id="exercise" class="calc-panel">
+        <h2 class="text-xl font-bold text-teal-700 mb-1">운동 칼로리 계산기</h2>
+        <p class="text-sm text-slate-500 mb-5">MET 기반 에너지 소비 추정</p>
+        <div class="grid sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">체중 (kg)</label>
+            <input type="number" id="ex-weight" class="w-full border rounded-lg px-3 py-2" placeholder="예: 65">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">운동 시간 (분)</label>
+            <input type="number" id="ex-minutes" class="w-full border rounded-lg px-3 py-2" placeholder="예: 30">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium mb-1">운동 종류</label>
+            <select id="ex-activity" class="w-full border rounded-lg px-3 py-2">
+              <option value="2.5">요가 (하타) - MET 2.5</option>
+              <option value="3.0">필라테스 - MET 3.0</option>
+              <option value="3.5">웨이트 트레이닝 (일반) - MET 3.5</option>
+              <option value="3.5">걷기 (보통 속도) - MET 3.5</option>
+              <option value="4.3">걷기 (빠른 속도) - MET 4.3</option>
+              <option value="5.0">자전거 (보통) - MET 5.0</option>
+              <option value="5.8">수영 (여유롭게) - MET 5.8</option>
+              <option value="6.0">조깅 (느린 속도) - MET 6.0</option>
+              <option value="7.0">자전거 (빠른 속도) - MET 7.0</option>
+              <option value="8.0">러닝 (보통) / HIIT - MET 8.0</option>
+              <option value="9.8">러닝 (빠른 속도) - MET 9.8</option>
+              <option value="11.0">줄넘기 - MET 11.0</option>
+            </select>
+          </div>
+        </div>
+        <button onclick="calcExercise()" class="w-full bg-teal-600 text-white py-2.5 rounded-lg font-medium hover:bg-teal-700 transition">계산하기</button>
+        <div id="ex-result" class="mt-5 hidden result-box rounded-xl p-4"></div>
+      </div>
+
+      <!-- 9. 임신 주수 -->
+      <div id="pregnancy" class="calc-panel">
+        <h2 class="text-xl font-bold text-teal-700 mb-1">임신 주수 계산기</h2>
+        <p class="text-sm text-slate-500 mb-5">마지막 생리 시작일(LMP) 기준</p>
+        <div class="grid sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">마지막 생리 시작일</label>
+            <input type="date" id="preg-lmp" class="w-full border rounded-lg px-3 py-2">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">기준 날짜 (오늘)</label>
+            <input type="date" id="preg-today" class="w-full border rounded-lg px-3 py-2">
+          </div>
+        </div>
+        <button onclick="calcPregnancy()" class="w-full bg-teal-600 text-white py-2.5 rounded-lg font-medium hover:bg-teal-700 transition">계산하기</button>
+        <div id="preg-result" class="mt-5 hidden result-box rounded-xl p-4"></div>
+      </div>
+
+      <!-- 10. 배란일 -->
+      <div id="ovulation" class="calc-panel">
+        <h2 class="text-xl font-bold text-teal-700 mb-1">배란일 계산기</h2>
+        <p class="text-sm text-slate-500 mb-5">생리 주기 기준 배란일·가임기 추정</p>
+        <div class="grid sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">마지막 생리 시작일</label>
+            <input type="date" id="ovu-lmp" class="w-full border rounded-lg px-3 py-2">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">평균 생리 주기 (일)</label>
+            <input type="number" id="ovu-cycle" class="w-full border rounded-lg px-3 py-2" placeholder="예: 28" value="28">
+          </div>
+        </div>
+        <button onclick="calcOvulation()" class="w-full bg-teal-600 text-white py-2.5 rounded-lg font-medium hover:bg-teal-700 transition">계산하기</button>
+        <div id="ovu-result" class="mt-5 hidden result-box rounded-xl p-4"></div>
+      </div>
+
+    </div>
+
+    <p class="text-center text-xs text-slate-400 mt-6">
+      ※ 모든 결과는 추정치이며 의학적 진단이 아닙니다. 정확한 건강 상담은 전문의와 상의하세요.
+    </p>
+  </div>
+
+  <script>
+    // 버튼 전환
+    function showCalc(id) {
+      document.querySelectorAll('.calc-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.btn-calc').forEach(b => b.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.querySelector(`[data-target="${id}"]`).classList.add('active');
+    }
+
+    // 오늘 날짜 기본 설정
+    document.addEventListener('DOMContentLoaded', () => {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('preg-today').value = today;
+    });
+
+    // 1. BMI
+    function calcBMI() {
+      const h = parseFloat(document.getElementById('bmi-height').value) / 100;
+      const w = parseFloat(document.getElementById('bmi-weight').value);
+      if (!h || !w || h <= 0 || w <= 0) return alert('키와 체중을 올바르게 입력해주세요.');
+      const bmi = w / (h * h);
+      let cat = '', color = '';
+      if (bmi < 18.5) { cat = '저체중'; color = 'text-blue-600'; }
+      else if (bmi < 23) { cat = '정상'; color = 'text-green-600'; }
+      else if (bmi < 25) { cat = '비만 전 단계 (과체중)'; color = 'text-yellow-600'; }
+      else if (bmi < 30) { cat = '1단계 비만'; color = 'text-orange-600'; }
+      else if (bmi < 35) { cat = '2단계 비만'; color = 'text-red-600'; }
+      else { cat = '3단계 비만'; color = 'text-red-800'; }
+      const box = document.getElementById('bmi-result');
+      box.classList.remove('hidden');
+      box.innerHTML = `
+        <p class="text-2xl font-bold">BMI <span class="${color}">${bmi.toFixed(1)}</span></p>
+        <p class="mt-1 font-medium ${color}">${cat}</p>
+        <p class="text-xs text-slate-500 mt-3">대한비만학회 기준: 정상 18.5~22.9 / 비만전단계 23~24.9 / 비만 25 이상</p>
+      `;
+    }
+
+    // 2. BMR
+    function calcBMR() {
+      const gender = document.getElementById('bmr-gender').value;
+      const age = parseFloat(document.getElementById('bmr-age').value);
+      const height = parseFloat(document.getElementById('bmr-height').value);
+      const weight = parseFloat(document.getElementById('bmr-weight').value);
+      if (!age || !height || !weight) return alert('모든 값을 입력해주세요.');
+      let bmr = 10 * weight + 6.25 * height - 5 * age;
+      bmr = gender === 'male' ? bmr + 5 : bmr - 161;
+      const box = document.getElementById('bmr-result');
+      box.classList.remove('hidden');
+      box.innerHTML = `
+        <p class="text-2xl font-bold text-teal-700">${Math.round(bmr)} <span class="text-base font-normal">kcal/일</span></p>
+        <p class="text-sm text-slate-600 mt-2">기초대사량(BMR)은 아무것도 하지 않아도 몸이 하루 동안 사용하는 최소 에너지입니다.</p>
+      `;
+    }
+
+    // 3. TDEE
+    function calcTDEE() {
+      const gender = document.getElementById('tdee-gender').value;
+      const age = parseFloat(document.getElementById('tdee-age').value);
+      const height = parseFloat(document.getElementById('tdee-height').value);
+      const weight = parseFloat(document.getElementById('tdee-weight').value);
+      const act = parseFloat(document.getElementById('tdee-activity').value);
+      if (!age || !height || !weight) return alert('모든 값을 입력해주세요.');
+      let bmr = 10 * weight + 6.25 * height - 5 * age;
+      bmr = gender === 'male' ? bmr + 5 : bmr - 161;
+      const tdee = bmr * act;
+      const box = document.getElementById('tdee-result');
+      box.classList.remove('hidden');
+      box.innerHTML = `
+        <p class="text-lg">기초대사량(BMR): <strong>${Math.round(bmr)} kcal</strong></p>
+        <p class="text-2xl font-bold text-teal-700 mt-1">하루 권장 칼로리: ${Math.round(tdee)} <span class="text-base font-normal">kcal</span></p>
+        <p class="text-sm text-slate-600 mt-2">체중 유지를 위한 예상 필요 열량입니다. 감량 시 이보다 300~500kcal 적게 섭취하세요.</p>
+      `;
+    }
+
+    // 4. 다이어트
+    function calcDiet() {
+      const gender = document.getElementById('diet-gender').value;
+      const age = parseFloat(document.getElementById('diet-age').value);
+      const height = parseFloat(document.getElementById('diet-height').value);
+      const current = parseFloat(document.getElementById('diet-current').value);
+      const goal = parseFloat(document.getElementById('diet-goal').value);
+      const rate = parseFloat(document.getElementById('diet-rate').value);
+      const act = parseFloat(document.getElementById('diet-activity').value);
+      if (!age || !height || !current || !goal) return alert('모든 값을 입력해주세요.');
+      if (goal >= current) return alert('목표 체중은 현재 체중보다 작아야 합니다.');
+      let bmr = 10 * current + 6.25 * height - 5 * age;
+      bmr = gender === 'male' ? bmr + 5 : bmr - 161;
+      const tdee = bmr * act;
+      const toLose = current - goal;
+      const weeks = toLose / rate;
+      const dailyDeficit = (rate * 7700) / 7; // 1kg ≈ 7700kcal
+      const intake = Math.round(tdee - dailyDeficit);
+      const box = document.getElementById('diet-result');
+      box.classList.remove('hidden');
+      box.innerHTML = `
+        <p class="text-lg">감량해야 할 체중: <strong>${toLose.toFixed(1)} kg</strong></p>
+        <p class="text-2xl font-bold text-teal-700 mt-1">예상 기간: 약 ${Math.ceil(weeks)}주 <span class="text-base font-normal">(${Math.round(weeks * 7)}일)</span></p>
+        <p class="mt-2">일일 권장 섭취 칼로리: <strong>${intake} kcal</strong></p>
+        <p class="text-sm text-slate-600 mt-2">하루 약 ${Math.round(dailyDeficit)}kcal 적자 기준입니다. 너무 급격한 감량은 건강에 해로울 수 있으니 주의하세요.</p>
+      `;
+    }
+
+    // 5. 체지방률
+    function toggleHip() {
+      const g = document.getElementById('bf-gender').value;
+      document.getElementById('bf-hip-wrap').classList.toggle('hidden', g === 'male');
+    }
+    function calcBodyFat() {
+      const gender = document.getElementById('bf-gender').value;
+      const height = parseFloat(document.getElementById('bf-height').value);
+      const neck = parseFloat(document.getElementById('bf-neck').value);
+      const waist = parseFloat(document.getElementById('bf-waist').value);
+      const hip = parseFloat(document.getElementById('bf-hip').value);
+      if (!height || !neck || !waist) return alert('필수 값을 입력해주세요.');
+      if (gender === 'female' && !hip) return alert('여성은 엉덩이 둘레도 입력해주세요.');
+      let density, bf;
+      if (gender === 'male') {
+        density = 1.0324 - 0.19077 * Math.log10(waist - neck) + 0.15456 * Math.log10(height);
+      } else {
+        density = 1.29579 - 0.35004 * Math.log10(waist + hip - neck) + 0.22100 * Math.log10(height);
+      }
+      bf = 495 / density - 450;
+      let cat = '';
+      if (gender === 'male') {
+        if (bf < 10) cat = '매우 낮음 (운동선수 수준)';
+        else if (bf < 14) cat = '낮음 (피트니스)';
+        else if (bf < 18) cat = '보통 (평균)';
+        else if (bf < 25) cat = '약간 높음';
+        else cat = '높음';
+      } else {
+        if (bf < 18) cat = '매우 낮음 (운동선수 수준)';
+        else if (bf < 22) cat = '낮음 (피트니스)';
+        else if (bf < 28) cat = '보통 (평균)';
+        else if (bf < 33) cat = '약간 높음';
+        else cat = '높음';
+      }
+      const box = document.getElementById('bf-result');
+      box.classList.remove('hidden');
+      box.innerHTML = `
+        <p class="text-2xl font-bold text-teal-700">체지방률 ${bf.toFixed(1)}%</p>
+        <p class="mt-1 font-medium">${cat}</p>
+        <p class="text-xs text-slate-500 mt-3">미국 해군 공식 기반 추정값입니다. 실제 측정과는 차이가 있을 수 있습니다.</p>
+      `;
+    }
+
+    // 6. 물
+    function calcWater() {
+      const w = parseFloat(document.getElementById('water-weight').value);
+      const mlPerKg = parseFloat(document.getElementById('water-activity').value);
+      if (!w) return alert('체중을 입력해주세요.');
+      const ml = w * mlPerKg;
+      const liters = (ml / 1000).toFixed(1);
+      const cups = Math.round(ml / 200); // 200ml 기준
+      const box = document.getElementById('water-result');
+      box.classList.remove('hidden');
+      box.innerHTML = `
+        <p class="text-2xl font-bold text-teal-700">${liters} L <span class="text-base font-normal">(${Math.round(ml)} ml)</span></p>
+        <p class="mt-1">약 ${cups}잔 (200ml 기준)</p>
+        <p class="text-sm text-slate-600 mt-2">운동 시나 더운 날씨에는 추가로 500ml 정도 더 마시는 것을 권장합니다.</p>
+      `;
+    }
+
+    // 7. 단백질
+    function calcProtein() {
+      const w = parseFloat(document.getElementById('protein-weight').value);
+      const g = parseFloat(document.getElementById('protein-goal').value);
+      if (!w) return alert('체중을 입력해주세요.');
+      const protein = Math.round(w * g);
+      const box = document.getElementById('protein-result');
+      box.classList.remove('hidden');
+      box.innerHTML = `
+        <p class="text-2xl font-bold text-teal-700">${protein} g <span class="text-base font-normal">/ 하루</span></p>
+        <p class="text-sm text-slate-600 mt-2">선택하신 기준(${g}g/kg)으로 계산된 권장량입니다. 식사와 간식으로 고르게 나누어 섭취하세요.</p>
+      `;
+    }
+
+    // 8. 운동 칼로리
+    function calcExercise() {
+      const w = parseFloat(document.getElementById('ex-weight').value);
+      const min = parseFloat(document.getElementById('ex-minutes').value);
+      const met = parseFloat(document.getElementById('ex-activity').value);
+      if (!w || !min) return alert('체중과 시간을 입력해주세요.');
+      const hours = min / 60;
+      const cal = met * w * hours;
+      const box = document.getElementById('ex-result');
+      box.classList.remove('hidden');
+      box.innerHTML = `
+        <p class="text-2xl font-bold text-teal-700">약 ${Math.round(cal)} <span class="text-base font-normal">kcal</span></p>
+        <p class="text-sm text-slate-600 mt-2">${min}분 동안 소모되는 예상 에너지입니다. 실제 소모량은 강도·컨디션에 따라 달라질 수 있습니다.</p>
+      `;
+    }
+
+    // 9. 임신 주수
+    function calcPregnancy() {
+      const lmpStr = document.getElementById('preg-lmp').value;
+      const todayStr = document.getElementById('preg-today').value;
+      if (!lmpStr || !todayStr) return alert('날짜를 모두 입력해주세요.');
+      const lmp = new Date(lmpStr);
+      const today = new Date(todayStr);
+      if (today < lmp) return alert('기준 날짜는 생리 시작일 이후여야 합니다.');
+      const diffDays = Math.floor((today - lmp) / (1000 * 60 * 60 * 24));
+      const weeks = Math.floor(diffDays / 7);
+      const days = diffDays % 7;
+      // 예정일 = LMP + 280일
+      const due = new Date(lmp);
+      due.setDate(due.getDate() + 280);
+      const dueStr = due.toISOString().split('T')[0];
+      let trimester = '';
+      if (weeks < 14) trimester = '임신 초기 (1삼분기)';
+      else if (weeks < 28) trimester = '임신 중기 (2삼분기)';
+      else trimester = '임신 후기 (3삼분기)';
+      const box = document.getElementById('preg-result');
+      box.classList.remove('hidden');
+      box.innerHTML = `
+        <p class="text-2xl font-bold text-teal-700">${weeks}주 ${days}일</p>
+        <p class="mt-1 font-medium">${trimester}</p>
+        <p class="mt-2">출산 예정일(예상): <strong>${dueStr}</strong></p>
+        <p class="text-xs text-slate-500 mt-3">마지막 생리 시작일 기준입니다. 초음파 결과에 따라 주수가 조정될 수 있습니다.</p>
+      `;
+    }
+
+    // 10. 배란일
+    function calcOvulation() {
+      const lmpStr = document.getElementById('ovu-lmp').value;
+      const cycle = parseInt(document.getElementById('ovu-cycle').value);
+      if (!lmpStr || !cycle || cycle < 21 || cycle > 45) return alert('생리 시작일과 주기(21~45일)를 올바르게 입력해주세요.');
+      const lmp = new Date(lmpStr);
+      // 배란일 ≈ 다음 생리 예정일 - 14일 = LMP + (cycle - 14)
+      const ovu = new Date(lmp);
+      ovu.setDate(ovu.getDate() + (cycle - 14));
+      // 가임기: 배란 5일 전 ~ 배란 당일
+      const fertileStart = new Date(ovu);
+      fertileStart.setDate(fertileStart.getDate() - 5);
+      const nextPeriod = new Date(lmp);
+      nextPeriod.setDate(nextPeriod.getDate() + cycle);
+      const fmt = d => d.toISOString().split('T')[0];
+      const box = document.getElementById('ovu-result');
+      box.classList.remove('hidden');
+      box.innerHTML = `
+        <p class="text-lg">예상 배란일: <strong class="text-teal-700 text-xl">${fmt(ovu)}</strong></p>
+        <p class="mt-2">가임기(임신 가능성 높은 기간): <strong>${fmt(fertileStart)} ~ ${fmt(ovu)}</strong></p>
+        <p class="mt-1">다음 생리 예상일: <strong>${fmt(nextPeriod)}</strong></p>
+        <p class="text-xs text-slate-500 mt-3">주기가 불규칙하거나 피임 목적으로는 사용하지 마세요. 참고용 추정치입니다.</p>
+      `;
+    }
+  </script>
+</body>
+</html>
