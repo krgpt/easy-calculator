@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>올인원 텍스트 & 데이터 마법 스튜디오 (Text & Data Wizard Studio)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Accordion animation (첫 번째 파일 구조 참고) */
+    .accordion-content {
+      transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+    }
+    .accordion-content.open {
+      max-height: 2000px;
+      opacity: 1;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans">
+
+  <!-- Header -->
+  <header class="bg-indigo-600 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div>
+        <h1 class="text-2xl font-bold flex items-center gap-2">
+          <i data-lucide="wand-2" class="w-7 h-7"></i>
+          올인원 텍스트 & 데이터 마법 스튜디오
+        </h1>
+        <p class="text-indigo-100 text-sm mt-1">서버 전송 없이 100% 브라우저 로컬에서 안전하고 빠르게 작동하는 극대화 유틸리티</p>
+      </div>
+      <div class="flex items-center gap-2 text-xs bg-indigo-700 px-3 py-1.5 rounded-full text-indigo-200 border border-indigo-500">
+        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+        <span>100% 로컬 보안 처리 (외부 유출 없음)</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full space-y-8">
+
+    <!-- 1. Text Workbench -->
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+        <i data-lucide="edit-3" class="w-5 h-5 text-indigo-600"></i>
+        텍스트 & 데이터 변환 작업실
+      </h2>
+
+      <!-- Input / Output Area -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Input Textarea -->
+        <div class="flex flex-col">
+          <div class="flex justify-between items-center mb-2">
+            <label for="inputText" class="text-sm font-semibold text-slate-700">원본 텍스트 (입력 A)</label>
+            <button id="clearBtn" class="text-xs text-slate-500 hover:text-red-600 flex items-center gap-1 transition">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> 초기화
+            </button>
+          </div>
+          <textarea id="inputText" rows="12" class="w-full p-3.5 text-sm font-mono border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-y bg-slate-50 focus:bg-white transition" placeholder="여기에 정제하거나 변환할 텍스트를 입력하세요..."></textarea>
+          <div class="mt-1 text-right text-xs text-slate-400 font-mono" id="inputStats">0자 | 0줄</div>
+        </div>
+
+        <!-- Output Textarea -->
+        <div class="flex flex-col">
+          <div class="flex justify-between items-center mb-2">
+            <label for="outputText" class="text-sm font-semibold text-slate-700">변환된 결과 (출력 B / 비교 대상)</label>
+            <button id="copyBtn" class="text-xs font-semibold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-2.5 py-1 rounded flex items-center gap-1 transition">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i> 결과 복사
+            </button>
+          </div>
+          <textarea id="outputText" rows="12" class="w-full p-3.5 text-sm font-mono border border-slate-300 rounded-lg bg-slate-100 outline-none resize-y" placeholder="변환 버튼을 누르거나 비교 기능을 사용할 때 결과가 나타납니다."></textarea>
+          <div class="mt-1 text-right text-xs text-slate-400 font-mono" id="outputStats">0자 | 0줄</div>
+        </div>
+      </div>
+
+      <!-- Control Toolbar - Categorized Grid -->
+      <div class="mt-6 pt-6 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+
+        <!-- Group 1: 텍스트 정제 및 포맷팅 -->
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 flex flex-col justify-between">
+          <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider block mb-2">1. 정제 & 포맷팅</span>
+          <div class="space-y-1">
+            <button onclick="transformText('removeNewlines')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">줄바꿈 ➔ 공백 변환</button>
+            <button onclick="transformText('removeEmptyLines')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">빈 줄 완전 제거</button>
+            <button onclick="transformText('trimSpaces')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">연속 공백 1칸 축소</button>
+            <button onclick="transformText('addLineNumbers')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">줄 번호 일괄 부여</button>
+            <button onclick="transformText('removeSpecialChars')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">특수문자/이모지 제거</button>
+          </div>
+        </div>
+
+        <!-- Group 2: 정렬 & 구조화 -->
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 flex flex-col justify-between">
+          <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider block mb-2">2. 정렬 & 구조화</span>
+          <div class="space-y-1">
+            <button onclick="transformText('sortAsc')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">가나다 / 알파벳 정렬 (오름차순)</button>
+            <button onclick="transformText('sortDesc')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">가나다 / 알파벳 정렬 (내림차순)</button>
+            <button onclick="transformText('removeDuplicates')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">중복 줄 완전 제거</button>
+            <button onclick="transformText('countFrequency')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">단어 등장 빈도 분석</button>
+            <button onclick="transformText('reverseLines')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">줄 순서 완전히 뒤집기</button>
+          </div>
+        </div>
+
+        <!-- Group 3: 데이터 & 코드 변환 -->
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 flex flex-col justify-between">
+          <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider block mb-2">3. 데이터 & 표기법</span>
+          <div class="space-y-1">
+            <button onclick="transformText('jsonBeautify')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">JSON 정렬 (Beautify)</button>
+            <button onclick="transformText('jsonMinify')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">JSON 한 줄 축소 (Minify)</button>
+            <button onclick="transformText('csvToJson')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">CSV / Tab ➔ JSON 변환</button>
+            <button onclick="transformText('urlEncodeDecode')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">URL 인코딩 / 디코딩</button>
+            <button onclick="transformText('toCamelCase')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">카멜 케이스 (camelCase)</button>
+            <button onclick="transformText('toSnakeCase')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">스네이크 케이스 (snake_case)</button>
+          </div>
+        </div>
+
+        <!-- Group 4: 보안 & 암호화 -->
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 flex flex-col justify-between">
+          <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider block mb-2">4. 보안 & 암호화</span>
+          <div class="space-y-1">
+            <button onclick="transformText('base64Encode')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">Base64 인코딩</button>
+            <button onclick="transformText('base64Decode')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">Base64 디코딩</button>
+            <button onclick="transformText('generateHash')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">SHA-256 보안 해시 생성</button>
+            <button onclick="transformText('generatePassword')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">강력한 비밀번호 자동 생성</button>
+            <button onclick="transformText('stripHtml')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">HTML 태그 순수 텍스트 추출</button>
+          </div>
+        </div>
+
+        <!-- Group 5: 정보 추출 & 분석 -->
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 flex flex-col justify-between">
+          <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider block mb-2">5. 추출 & 분석</span>
+          <div class="space-y-1">
+            <button onclick="transformText('extractEmails')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">이메일 주소만 추출</button>
+            <button onclick="transformText('extractPhones')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">전화번호만 추출</button>
+            <button onclick="transformText('extractUrls')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">URL (링크)만 추출</button>
+            <button onclick="transformText('toUpperCase')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">모두 대문자로 변환</button>
+            <button onclick="transformText('toLowerCase')" class="w-full text-left px-2.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded text-xs font-medium text-slate-700 transition">모두 소문자로 변환</button>
+            <button onclick="transformText('diffChecker')" class="w-full text-left px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-600 rounded text-xs font-bold transition">A와 B 텍스트 차이 비교</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 2. Static User Guide Section (HTML Standard Cards) -->
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div class="mb-6">
+        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+          <i data-lucide="book-open" class="w-6 h-6 text-indigo-600"></i>
+          전체 기능 종합 사용법 안내 & 실전 사례 (마스터 가이드)
+        </h2>
+        <p class="text-slate-500 text-sm mt-1">각 번호 항목을 클릭하면 아래로 화면이 펼쳐지면서 상세한 사용법과 실전 예시 사례를 확인하실 수 있습니다.</p>
+      </div>
+
+      <!-- Accordion List -->
+      <div class="space-y-3">
+
+        <!-- Item 1 -->
+        <div class="border border-slate-200 rounded-lg overflow-hidden transition">
+          <button onclick="toggleAccordion('guide1')" class="w-full p-4 bg-slate-50 hover:bg-indigo-50 text-left font-semibold text-slate-800 flex justify-between items-center transition">
+            <span class="flex items-center gap-2">
+              <span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs font-bold">1</span>
+              PDF/웹사이트 복사 시 깨진 줄바꿈 제거 사용법
+            </span>
+            <i id="guide1-icon" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform"></i>
+          </button>
+          <div id="guide1" class="accordion-content bg-white px-5 py-4 border-t border-slate-100">
+            <p class="text-sm text-slate-600 mb-3">PDF나 뉴스 기사에서 텍스트를 복사할 때 문장 중간중간 엉뚱하게 들어간 줄바꿈을 공백 1칸으로 부드럽게 이어줍니다.</p>
+            <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 text-xs font-mono space-y-2">
+              <div>
+                <span class="font-bold text-red-500">[입력 예시]</span>
+                <pre class="text-slate-600 bg-white p-2 rounded mt-1 border border-slate-200 whitespace-pre-wrap">인공지능 기술이 급격히 발전함에 따라
+많은 기업들이 업무 자동화를
+도입하고 있습니다.</pre>
+              </div>
+              <div class="text-center text-slate-400">↓ [줄바꿈 ➔ 공백 변환] 클릭 시 ↓</div>
+              <div>
+                <span class="font-bold text-emerald-600">[변환 결과]</span>
+                <pre class="text-slate-800 bg-emerald-50 p-2 rounded mt-1 border border-emerald-200 whitespace-pre-wrap">인공지능 기술이 급격히 발전함에 따라 많은 기업들이 업무 자동화를 도입하고 있습니다.</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 2 -->
+        <div class="border border-slate-200 rounded-lg overflow-hidden transition">
+          <button onclick="toggleAccordion('guide2')" class="w-full p-4 bg-slate-50 hover:bg-indigo-50 text-left font-semibold text-slate-800 flex justify-between items-center transition">
+            <span class="flex items-center gap-2">
+              <span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs font-bold">2</span>
+              정규식(Regex)을 이용한 특정 정보 추출 사용법
+            </span>
+            <i id="guide2-icon" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform"></i>
+          </button>
+          <div id="guide2" class="accordion-content bg-white px-5 py-4 border-t border-slate-100">
+            <p class="text-sm text-slate-600 mb-3">수백 줄의 문의글이나 데이터 속에서 이메일 주소, 전화번호, 웹 URL 링크만 쏙쏙 골라 모아줍니다.</p>
+            <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 text-xs font-mono space-y-2">
+              <div>
+                <span class="font-bold text-red-500">[입력 예시]</span>
+                <pre class="text-slate-600 bg-white p-2 rounded mt-1 border border-slate-200 whitespace-pre-wrap">홍길동 (hong@example.com / 010-1234-5678)
+문의 사항은 support@kylab.com 으로 연락바람.</pre>
+              </div>
+              <div class="text-center text-slate-400">↓ [이메일 주소만 추출] 클릭 시 ↓</div>
+              <div>
+                <span class="font-bold text-emerald-600">[변환 결과]</span>
+                <pre class="text-slate-800 bg-emerald-50 p-2 rounded mt-1 border border-emerald-200 whitespace-pre-wrap">hong@example.com
+support@kylab.com</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 3 -->
+        <div class="border border-slate-200 rounded-lg overflow-hidden transition">
+          <button onclick="toggleAccordion('guide3')" class="w-full p-4 bg-slate-50 hover:bg-indigo-50 text-left font-semibold text-slate-800 flex justify-between items-center transition">
+            <span class="flex items-center gap-2">
+              <span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs font-bold">3</span>
+              뒤죽박죽된 JSON 데이터 정렬 (Beautify / Minify) 사용법
+            </span>
+            <i id="guide3-icon" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform"></i>
+          </button>
+          <div id="guide3" class="accordion-content bg-white px-5 py-4 border-t border-slate-100">
+            <p class="text-sm text-slate-600 mb-3">한 줄로 꼬인 JSON 문자열을 들여쓰기가 포함된 구조로 펼치거나(Beautify), 용량 축소를 위해 한 줄로 압축(Minify)합니다.</p>
+            <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 text-xs font-mono space-y-2">
+              <div>
+                <span class="font-bold text-red-500">[입력 예시]</span>
+                <pre class="text-slate-600 bg-white p-2 rounded mt-1 border border-slate-200 whitespace-pre-wrap">{"name":"홍길동","age":30,"roles":["admin","user"]}</pre>
+              </div>
+              <div class="text-center text-slate-400">↓ [JSON 정렬 (Beautify)] 클릭 시 ↓</div>
+              <div>
+                <span class="font-bold text-emerald-600">[변환 결과]</span>
+                <pre class="text-slate-800 bg-emerald-50 p-2 rounded mt-1 border border-emerald-200 whitespace-pre-wrap">{
+  "name": "홍길동",
+  "age": 30,
+  "roles": [
+    "admin",
+    "user"
+  ]
+}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 4 -->
+        <div class="border border-slate-200 rounded-lg overflow-hidden transition">
+          <button onclick="toggleAccordion('guide4')" class="w-full p-4 bg-slate-50 hover:bg-indigo-50 text-left font-semibold text-slate-800 flex justify-between items-center transition">
+            <span class="flex items-center gap-2">
+              <span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs font-bold">4</span>
+              대소문자 변환 및 중복 줄 제거 사용법
+            </span>
+            <i id="guide4-icon" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform"></i>
+          </button>
+          <div id="guide4" class="accordion-content bg-white px-5 py-4 border-t border-slate-100">
+            <p class="text-sm text-slate-600 mb-3">영문 텍스트 전체를 대/소문자로 바꾼 뒤, 여러 소스에서 수집된 중복 텍스트 줄을 하나만 남기고 완전히 정리합니다.</p>
+            <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 text-xs font-mono space-y-2">
+              <div>
+                <span class="font-bold text-red-500">[입력 예시]</span>
+                <pre class="text-slate-600 bg-white p-2 rounded mt-1 border border-slate-200 whitespace-pre-wrap">apple
+banana
+apple
+cherry</pre>
+              </div>
+              <div class="text-center text-slate-400">↓ [중복 줄 완전 제거] 클릭 시 ↓</div>
+              <div>
+                <span class="font-bold text-emerald-600">[변환 결과]</span>
+                <pre class="text-slate-800 bg-emerald-50 p-2 rounded mt-1 border border-emerald-200 whitespace-pre-wrap">apple
+banana
+cherry</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 5 -->
+        <div class="border border-slate-200 rounded-lg overflow-hidden transition">
+          <button onclick="toggleAccordion('guide5')" class="w-full p-4 bg-slate-50 hover:bg-indigo-50 text-left font-semibold text-slate-800 flex justify-between items-center transition">
+            <span class="flex items-center gap-2">
+              <span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs font-bold">5</span>
+              가나다 / 알파벳 정렬 & 등장 빈도 분석 사용법
+            </span>
+            <i id="guide5-icon" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform"></i>
+          </button>
+          <div id="guide5" class="accordion-content bg-white px-5 py-4 border-t border-slate-100">
+            <p class="text-sm text-slate-600 mb-3">뒤죽박죽 섞인 텍스트 줄을 가나다/알파벳순으로 정렬하거나, 본문 내 어떤 단어가 몇 번 등장했는지 카운트합니다.</p>
+            <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 text-xs font-mono space-y-2">
+              <div>
+                <span class="font-bold text-red-500">[입력 예시]</span>
+                <pre class="text-slate-600 bg-white p-2 rounded mt-1 border border-slate-200 whitespace-pre-wrap">바나나
+사과
+바나나
+포도</pre>
+              </div>
+              <div class="text-center text-slate-400">↓ [단어 등장 빈도 분석] 클릭 시 ↓</div>
+              <div>
+                <span class="font-bold text-emerald-600">[변환 결과]</span>
+                <pre class="text-slate-800 bg-emerald-50 p-2 rounded mt-1 border border-emerald-200 whitespace-pre-wrap">바나나: 2회
+사과: 1회
+포도: 1회</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 6 -->
+        <div class="border border-slate-200 rounded-lg overflow-hidden transition">
+          <button onclick="toggleAccordion('guide6')" class="w-full p-4 bg-slate-50 hover:bg-indigo-50 text-left font-semibold text-slate-800 flex justify-between items-center transition">
+            <span class="flex items-center gap-2">
+              <span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs font-bold">6</span>
+              CSV / 탭 구분 텍스트 ➔ JSON 자동 변환 사용법
+            </span>
+            <i id="guide6-icon" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform"></i>
+          </button>
+          <div id="guide6" class="accordion-content bg-white px-5 py-4 border-t border-slate-100">
+            <p class="text-sm text-slate-600 mb-3">엑셀 표에서 복사한 탭(Tab) 구분 데이터나 CSV 파일의 데이터를 프로그래밍에 바로 쓰는 JSON 배열 구조로 바꿔줍니다.</p>
+            <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 text-xs font-mono space-y-2">
+              <div>
+                <span class="font-bold text-red-500">[입력 예시]</span>
+                <pre class="text-slate-600 bg-white p-2 rounded mt-1 border border-slate-200 whitespace-pre-wrap">이름	나이	부서
+홍길동	30	개발팀
+이순신	40	기획팀</pre>
+              </div>
+              <div class="text-center text-slate-400">↓ [CSV / Tab ➔ JSON 변환] 클릭 시 ↓</div>
+              <div>
+                <span class="font-bold text-emerald-600">[변환 결과]</span>
+                <pre class="text-slate-800 bg-emerald-50 p-2 rounded mt-1 border border-emerald-200 whitespace-pre-wrap">[
+  {
+    "이름": "홍길동",
+    "나이": "30",
+    "부서": "개발팀"
+  },
+  {
+    "이름": "이순신",
+    "나이": "40",
+    "부서": "기획팀"
+  }
+]</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 7 -->
+        <div class="border border-slate-200 rounded-lg overflow-hidden transition">
+          <button onclick="toggleAccordion('guide7')" class="w-full p-4 bg-slate-50 hover:bg-indigo-50 text-left font-semibold text-slate-800 flex justify-between items-center transition">
+            <span class="flex items-center gap-2">
+              <span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs font-bold">7</span>
+              100% 로컬 암호화 (Base64 / SHA-256 / 보안 패스워드) 사용법
+            </span>
+            <i id="guide7-icon" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform"></i>
+          </button>
+          <div id="guide7" class="accordion-content bg-white px-5 py-4 border-t border-slate-100">
+            <p class="text-sm text-slate-600 mb-3">서버로 유출되지 않는 브라우저 내장 암호화 API로 Base64 변환, 무결성 검증용 SHA-256 해시를 뽑고 보안 패스워드를 발급합니다.</p>
+            <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 text-xs font-mono space-y-2">
+              <div>
+                <span class="font-bold text-red-500">[입력 예시]</span>
+                <pre class="text-slate-600 bg-white p-2 rounded mt-1 border border-slate-200 whitespace-pre-wrap">MyPassword123!</pre>
+              </div>
+              <div class="text-center text-slate-400">↓ [SHA-256 보안 해시 생성] 클릭 시 ↓</div>
+              <div>
+                <span class="font-bold text-emerald-600">[변환 결과]</span>
+                <pre class="text-slate-800 bg-emerald-50 p-2 rounded mt-1 border border-emerald-200 whitespace-pre-wrap">7760ae7f805a5df03f739678170c0c6628b0fae3b4f9a0dcf85b2e3e50bf7bc0</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 8 -->
+        <div class="border border-slate-200 rounded-lg overflow-hidden transition">
+          <button onclick="toggleAccordion('guide8')" class="w-full p-4 bg-slate-50 hover:bg-indigo-50 text-left font-semibold text-slate-800 flex justify-between items-center transition">
+            <span class="flex items-center gap-2">
+              <span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs font-bold">8</span>
+              프로그래밍 표기법 (camelCase / snake_case) 변환 사용법
+            </span>
+            <i id="guide8-icon" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform"></i>
+          </button>
+          <div id="guide8" class="accordion-content bg-white px-5 py-4 border-t border-slate-100">
+            <p class="text-sm text-slate-600 mb-3">단어 표기 방식을 개발 규칙에 맞춰 카멜 케이스(myVariableName)나 스네이크 케이스(my_variable_name)로 상호 변환합니다.</p>
+            <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 text-xs font-mono space-y-2">
+              <div>
+                <span class="font-bold text-red-500">[입력 예시]</span>
+                <pre class="text-slate-600 bg-white p-2 rounded mt-1 border border-slate-200 whitespace-pre-wrap">user profile image URL</pre>
+              </div>
+              <div class="text-center text-slate-400">↓ [스네이크 케이스 (snake_case)] 클릭 시 ↓</div>
+              <div>
+                <span class="font-bold text-emerald-600">[변환 결과]</span>
+                <pre class="text-slate-800 bg-emerald-50 p-2 rounded mt-1 border border-emerald-200 whitespace-pre-wrap">user_profile_image_url</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 9 -->
+        <div class="border border-slate-200 rounded-lg overflow-hidden transition">
+          <button onclick="toggleAccordion('guide9')" class="w-full p-4 bg-slate-50 hover:bg-indigo-50 text-left font-semibold text-slate-800 flex justify-between items-center transition">
+            <span class="flex items-center gap-2">
+              <span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs font-bold">9</span>
+              HTML 태그 제거 & 두 텍스트 비교 (Diff Checker) 사용법
+            </span>
+            <i id="guide9-icon" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform"></i>
+          </button>
+          <div id="guide9" class="accordion-content bg-white px-5 py-4 border-t border-slate-100">
+            <p class="text-sm text-slate-600 mb-3">HTML 소스에서 글자만 깔끔히 뽑아내거나, 입력란 A와 B 두 문단을 비교하여 어떤 줄이 서로 다른지 검사합니다.</p>
+            <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 text-xs font-mono space-y-2">
+              <div>
+                <span class="font-bold text-red-500">[입력 예시]</span>
+                <pre class="text-slate-600 bg-white p-2 rounded mt-1 border border-slate-200 whitespace-pre-wrap">&lt;div class='content'&gt;&lt;h1&gt;제목입니다&lt;/h1&gt;&lt;p&gt;내용입니다.&lt;/p&gt;&lt;/div&gt;</pre>
+              </div>
+              <div class="text-center text-slate-400">↓ [HTML 태그 순수 텍스트 추출] 클릭 시 ↓</div>
+              <div>
+                <span class="font-bold text-emerald-600">[변환 결과]</span>
+                <pre class="text-slate-800 bg-emerald-50 p-2 rounded mt-1 border border-emerald-200 whitespace-pre-wrap">제목입니다내용입니다.</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-slate-100 border-t border-slate-200 text-center py-4 text-xs text-slate-500">
+    <p>© 2026 올인원 텍스트 & 데이터 마법 스튜디오 (Text & Data Wizard Studio). All Rights Reserved.</p>
+  </footer>
+
+  <!-- Script Logic -->
+  <script>
+    // Initialize Lucide Icons
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+
+    // DOM Elements
+    const inputText = document.getElementById('inputText');
+    const outputText = document.getElementById('outputText');
+    const inputStats = document.getElementById('inputStats');
+    const outputStats = document.getElementById('outputStats');
+
+    // Stats Updater
+    function updateStats() {
+      const inVal = inputText.value || '';
+      const outVal = outputText.value || '';
+      const inLines = inVal ? inVal.split('\n').length : 0;
+      const outLines = outVal ? outVal.split('\n').length : 0;
+
+      inputStats.innerText = inVal.length.toLocaleString() + '자 | ' + inLines.toLocaleString() + '줄';
+      outputStats.innerText = outVal.length.toLocaleString() + '자 | ' + outLines.toLocaleString() + '줄';
+    }
+
+    inputText.addEventListener('input', updateStats);
+    outputText.addEventListener('input', updateStats);
+
+    // Main Transform Logic
+    async function transformText(type) {
+      const val = inputText.value || '';
+
+      // 비밀번호 생성은 입력값이 없어도 동작
+      if (type === 'generatePassword') {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
+        let pass = "";
+        for (let i = 0; i < 16; i++) {
+          pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        outputText.value = pass;
+        updateStats();
+        return;
+      }
+
+      if (!val && type !== 'diffChecker') {
+        outputText.value = "";
+        updateStats();
+        return;
+      }
+
+      let res = "";
+
+      switch (type) {
+        // Group 1: 정제 & 포맷팅
+        case 'removeNewlines':
+          res = val.replace(/\r?\n|\r/g, ' ');
+          break;
+        case 'removeEmptyLines':
+          res = val.split(/\r?\n/).filter(line => line.trim() !== '').join('\n');
+          break;
+        case 'trimSpaces':
+          res = val.replace(/[ \t]+/g, ' ');
+          break;
+        case 'addLineNumbers':
+          res = val.split(/\r?\n/).map((line, idx) => (idx + 1) + '. ' + line).join('\n');
+          break;
+        case 'removeSpecialChars':
+          res = val.replace(/[^a-zA-Z0-9가-힣\s]/g, '');
+          break;
+
+        // Group 2: 정렬 & 구조화
+        case 'sortAsc':
+          res = val.split(/\r?\n/).sort((a, b) => a.localeCompare(b, 'ko-KR')).join('\n');
+          break;
+        case 'sortDesc':
+          res = val.split(/\r?\n/).sort((a, b) => b.localeCompare(a, 'ko-KR')).join('\n');
+          break;
+        case 'removeDuplicates':
+          res = Array.from(new Set(val.split(/\r?\n/))).join('\n');
+          break;
+        case 'countFrequency':
+          const words = val.trim().split(/\s+/).filter(w => w);
+          const freq = {};
+          words.forEach(w => { freq[w] = (freq[w] || 0) + 1; });
+          const sortedFreq = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+          res = sortedFreq.map(([word, count]) => word + ': ' + count + '회').join('\n');
+          break;
+        case 'reverseLines':
+          res = val.split(/\r?\n/).reverse().join('\n');
+          break;
+
+        // Group 3: 데이터 & 표기법
+        case 'jsonBeautify':
+          try {
+            res = JSON.stringify(JSON.parse(val), null, 2);
+          } catch (e) {
+            res = "올바른 JSON 형식이 아닙니다: " + e.message;
+          }
+          break;
+        case 'jsonMinify':
+          try {
+            res = JSON.stringify(JSON.parse(val));
+          } catch (e) {
+            res = "올바른 JSON 형식이 아닙니다: " + e.message;
+          }
+          break;
+        case 'csvToJson':
+          try {
+            const lines = val.trim().split(/\r?\n/);
+            if (lines.length < 2) {
+              res = "최소 헤더 1줄과 데이터 1줄 이상이 필요합니다.";
+              break;
+            }
+            // 탭 또는 콤마로 구분
+            const delimiter = lines[0].includes('\t') ? '\t' : ',';
+            const headers = lines[0].split(delimiter).map(h => h.trim());
+            const jsonArr = lines.slice(1).map(line => {
+              const values = line.split(delimiter).map(v => v.trim());
+              const obj = {};
+              headers.forEach((h, i) => { obj[h] = values[i] || ""; });
+              return obj;
+            });
+            res = JSON.stringify(jsonArr, null, 2);
+          } catch (e) {
+            res = "변환 실패: " + e.message;
+          }
+          break;
+        case 'urlEncodeDecode':
+          if (val.includes('%')) {
+            try {
+              res = decodeURIComponent(val);
+            } catch (e) {
+              res = encodeURIComponent(val);
+            }
+          } else {
+            res = encodeURIComponent(val);
+          }
+          break;
+        case 'toCamelCase':
+          res = val.toLowerCase()
+                   .replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase())
+                   .replace(/^[A-Z]/, (m) => m.toLowerCase());
+          break;
+        case 'toSnakeCase':
+          res = val
+            .replace(/([a-z])([A-Z])/g, '$1_$2')
+            .replace(/[\s\-]+/g, '_')
+            .toLowerCase();
+          break;
+
+        // Group 4: 보안 & 암호화
+        case 'base64Encode':
+          try {
+            res = btoa(unescape(encodeURIComponent(val)));
+          } catch (e) {
+            res = "인코딩 실패: " + e.message;
+          }
+          break;
+        case 'base64Decode':
+          try {
+            res = decodeURIComponent(escape(atob(val)));
+          } catch (e) {
+            res = "올바른 Base64 문자열이 아닙니다.";
+          }
+          break;
+        case 'generateHash':
+          if (window.crypto && crypto.subtle) {
+            try {
+              const msgUint8 = new TextEncoder().encode(val);
+              const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+              const hashArray = Array.from(new Uint8Array(hashBuffer));
+              res = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            } catch (e) {
+              res = "해시 생성 실패: " + e.message;
+            }
+          } else {
+            res = "현재 브라우저 환경에서 SHA-256을 지원하지 않습니다.";
+          }
+          break;
+        case 'stripHtml':
+          res = val.replace(/<[^>]*>?/gm, '');
+          break;
+
+        // Group 5: 추출 & 분석
+        case 'extractEmails':
+          const emails = val.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
+          res = emails ? Array.from(new Set(emails)).join('\n') : '이메일 주소를 찾을 수 없습니다.';
+          break;
+        case 'extractPhones':
+          // 한국 전화번호 패턴 + 일반 패턴
+          const phones = val.match(/(?:\d{2,3}[-.\s]?)?\d{3,4}[-.\s]?\d{4}/g);
+          res = phones ? Array.from(new Set(phones)).join('\n') : '전화번호를 찾을 수 없습니다.';
+          break;
+        case 'extractUrls':
+          const urls = val.match(/https?:\/\/[^\s<>"{}|\\^`[\]]+/g);
+          res = urls ? Array.from(new Set(urls)).join('\n') : 'URL을 찾을 수 없습니다.';
+          break;
+        case 'toUpperCase':
+          res = val.toUpperCase();
+          break;
+        case 'toLowerCase':
+          res = val.toLowerCase();
+          break;
+        case 'diffChecker':
+          const valB = outputText.value || '';
+          const linesA = val.split(/\r?\n/);
+          const linesB = valB.split(/\r?\n/);
+          let diffRes = "=== A(입력)와 B(출력) 줄 단위 차이 비교 ===\n\n";
+          const maxLines = Math.max(linesA.length, linesB.length);
+          let diffCount = 0;
+          for (let i = 0; i < maxLines; i++) {
+            const lA = linesA[i] !== undefined ? linesA[i] : "[줄 없음]";
+            const lB = linesB[i] !== undefined ? linesB[i] : "[줄 없음]";
+            if (lA !== lB) {
+              diffCount++;
+              diffRes += '[' + (i + 1) + '번째 줄 불일치]\n A: ' + lA + '\n B: ' + lB + '\n\n';
+            }
+          }
+          if (diffCount === 0) {
+            diffRes += "축하합니다! 두 텍스트가 완전히 일치합니다.";
+          } else {
+            diffRes = '총 ' + diffCount + '개 줄에서 차이가 발견되었습니다.\n\n' + diffRes;
+          }
+          res = diffRes;
+          break;
+      }
+
+      outputText.value = res;
+      updateStats();
+    }
+
+    // Clear & Copy Actions
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      inputText.value = "";
+      outputText.value = "";
+      updateStats();
+    });
+
+    document.getElementById('copyBtn').addEventListener('click', () => {
+      if (!outputText.value) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(outputText.value).then(() => {
+          alert("결과가 클립보드에 복사되었습니다!");
+        }).catch(() => {
+          // fallback
+          outputText.select();
+          document.execCommand('copy');
+          alert("결과가 클립보드에 복사되었습니다!");
+        });
+      } else {
+        outputText.select();
+        document.execCommand('copy');
+        alert("결과가 클립보드에 복사되었습니다!");
+      }
+    });
+
+    // Accordion Logic (첫 번째 파일 구조 참고)
+    function toggleAccordion(id) {
+      const content = document.getElementById(id);
+      const icon = document.getElementById(id + '-icon');
+      if (!content) return;
+
+      const isOpen = content.classList.contains('open');
+
+      // 모든 아코디언 닫기
+      document.querySelectorAll('.accordion-content').forEach(el => el.classList.remove('open'));
+      document.querySelectorAll('[id$="-icon"]').forEach(el => {
+        if (el) el.style.transform = 'rotate(0deg)';
+      });
+
+      // 클릭한 항목이 닫혀 있었으면 열기
+      if (!isOpen) {
+        content.classList.add('open');
+        if (icon) icon.style.transform = 'rotate(180deg)';
+      }
+    }
+
+    // 초기 통계 업데이트
+    updateStats();
+  </script>
+</body>
+</html>
