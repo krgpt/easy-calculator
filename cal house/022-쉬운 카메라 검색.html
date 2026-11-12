@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>카메라 찾기</title>
+  <meta name="description" content="중고 카메라·렌즈 품목을 모아두고 여러 매장에서 빠르게 찾아보는 도구" />
+  <style>
+    :root {
+      --bg: #0f1115;
+      --card: #1a1d24;
+      --card-hover: #22262f;
+      --border: #2c313c;
+      --text: #e8eaed;
+      --text-muted: #9aa0a6;
+      --accent: #f0a050;        /* 따뜻한 앰버 (렌즈/카메라 느낌) */
+      --accent-dim: #c47d30;
+      --success: #4caf7a;
+      --danger: #e57373;
+      --radius: 12px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.35);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      min-height: 100vh;
+      background-image:
+        radial-gradient(ellipse at 20% 0%, rgba(240,160,80,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 100%, rgba(80,120,200,0.06) 0%, transparent 50%);
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 24px 16px 80px;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      padding: 32px 0 28px;
+    }
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .logo-icon {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, #f0a050, #c47d30);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 16px rgba(240,160,80,0.3);
+    }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-top: 4px;
+    }
+
+    /* Notice */
+    .notice {
+      background: linear-gradient(135deg, rgba(240,160,80,0.12), rgba(240,160,80,0.05));
+      border: 1px solid rgba(240,160,80,0.25);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 28px;
+      font-size: 0.9rem;
+    }
+    .notice h2 {
+      font-size: 0.95rem;
+      color: var(--accent);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .notice ol {
+      padding-left: 18px;
+      color: var(--text-muted);
+    }
+    .notice li {
+      margin-bottom: 6px;
+    }
+    .notice strong {
+      color: var(--text);
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Input area */
+    .item-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .item-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .item-row input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .item-row input:focus {
+      border-color: var(--accent);
+    }
+    .item-row input::placeholder {
+      color: #5f6368;
+    }
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary {
+      background: var(--accent);
+      color: #1a1208;
+    }
+    .btn-primary:hover { background: #f5b06a; }
+    .btn-secondary {
+      background: var(--border);
+      color: var(--text);
+    }
+    .btn-secondary:hover { background: #3a4050; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover {
+      background: var(--card-hover);
+      color: var(--text);
+    }
+    .btn-danger {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid transparent;
+      padding: 8px 10px;
+    }
+    .btn-danger:hover {
+      background: rgba(229,115,115,0.12);
+      border-color: rgba(229,115,115,0.3);
+    }
+    .btn-sm {
+      padding: 7px 12px;
+      font-size: 0.82rem;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Saved items */
+    .saved-item {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: border-color 0.2s;
+    }
+    .saved-item:hover {
+      border-color: rgba(240,160,80,0.35);
+    }
+    .saved-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .saved-name {
+      font-weight: 600;
+      font-size: 1.05rem;
+    }
+    .meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .expiry {
+      font-size: 0.78rem;
+      padding: 3px 8px;
+      border-radius: 20px;
+      background: rgba(76,175,122,0.15);
+      color: var(--success);
+      white-space: nowrap;
+    }
+    .expiry.warning {
+      background: rgba(240,160,80,0.15);
+      color: var(--accent);
+    }
+    .expiry.danger {
+      background: rgba(229,115,115,0.15);
+      color: var(--danger);
+    }
+
+    .site-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .site-btn {
+      font-size: 0.78rem;
+      padding: 5px 10px;
+      border-radius: 6px;
+      background: var(--card-hover);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .site-btn:hover {
+      background: rgba(240,160,80,0.12);
+      border-color: rgba(240,160,80,0.4);
+      color: var(--accent);
+    }
+
+    .empty {
+      text-align: center;
+      padding: 36px 16px;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+    .empty-icon {
+      font-size: 2.2rem;
+      margin-bottom: 10px;
+      opacity: 0.5;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 24px 0 8px;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #2a2f3a;
+      color: var(--text);
+      padding: 12px 22px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 100;
+      pointer-events: none;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 520px) {
+      .saved-header { flex-direction: column; gap: 8px; }
+      .actions { flex-direction: column; }
+      .btn { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <div class="logo-icon">📷</div>
+        <h1>카메라 찾기</h1>
+      </div>
+      <p class="subtitle">원하는 카메라·렌즈를 모아두고 여러 매장에서 빠르게 찾아보세요</p>
+    </header>
+
+    <!-- 공지사항 -->
+    <div class="notice">
+      <h2>📢 공지사항</h2>
+      <ol>
+        <li>찾을 품목들은 따로 운영서버에 저장되지 않습니다. <strong>개인 PC 및 모바일 폰 안에 임시로 저장</strong>되어 있습니다.</li>
+        <li>로그 저장 기간은 <strong>1주일</strong>입니다. (품목 입력 시간으로부터 정확히 168시간) → 일주일이 지나면 다시 입력해야 합니다.</li>
+        <li>PC에서 사용 시 브라우저를 열어두어야 하며, 모바일은 상대적으로 신경 쓸 일이 적습니다.</li>
+        <li>찾는 품목들은 각 업체가 업로드하는 데이터에 의존하므로, 본 사이트의 개별 검색 능력과는 무관합니다.</li>
+      </ol>
+    </div>
+
+    <!-- 품목 입력 -->
+    <div class="card">
+      <div class="card-title">✏️ 찾을 품목 입력</div>
+      <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;line-height:1.5;">
+        팁: 「니콘 F3」처럼 짧게 쓰면 렌즈 조리개(f/3.5 등)와 섞일 수 있습니다.<br>
+        → <strong style="color:var(--accent);">「니콘 F3 바디」</strong> 또는 <strong style="color:var(--accent);">「Nikon F3」</strong>처럼 구체적으로 적어주세요.
+      </p>
+      <div class="item-list" id="itemList">
+        <!-- 동적으로 추가됨 -->
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="saveItems()">저장하기</button>
+      </div>
+      <p style="margin-top:12px;font-size:0.82rem;color:var(--text-muted);">
+        ※ 여러 품목을 한 번에 넣으려면 아래에서 「＋ 품목 추가」를 사용하세요.
+      </p>
+      <div style="margin-top:8px;">
+        <button class="btn btn-ghost btn-sm" onclick="addItemRow()">＋ 품목 추가</button>
+      </div>
+    </div>
+
+    <!-- 저장된 품목 -->
+    <div class="card">
+      <div class="card-title">
+        🗂️ 저장된 품목
+        <span id="itemCount" style="font-size:0.85rem;color:var(--text-muted);font-weight:400;"></span>
+      </div>
+      <div id="savedList">
+        <div class="empty">
+          <div class="empty-icon">📦</div>
+          아직 저장된 품목이 없습니다.<br>위에서 품목을 입력하고 저장해보세요.
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      카메라 찾기 · 데이터는 사용자 기기에만 저장됩니다 · 1주일 후 자동 삭제
+    </footer>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ===================== 사이트 목록 =====================
+    // preferDirect: true면 업체 내부 검색 페이지를 우선 사용
+    const SITES = [
+      { name: "거성카메라", domain: "geosungcamera.com", base: "https://geosungcamera.com", preferDirect: true },
+      { name: "효성카메라", domain: "hscdna.com", base: "https://hscdna.com", preferDirect: true },
+      { name: "잇츠카메라", domain: "itscamera.com", base: "https://www.itscamera.com", preferDirect: false },
+      { name: "억불카메라", domain: "ukbulcamera.co.kr", base: "https://www.ukbulcamera.co.kr", preferDirect: true, searchPath: "/goods/goods_search.php" },
+      { name: "디카친구", domain: "dika79.com", base: "https://dika79.com", preferDirect: true },
+      { name: "유에이카메라", domain: "uacamera.co.kr", base: "https://uacamera.co.kr", preferDirect: true },
+      { name: "남대문카메라", domain: "ndcamera.co.kr", base: "https://ndcamera.co.kr", preferDirect: true },
+      { name: "더카메라", domain: "thecamera.co.kr", base: "https://thecamera.co.kr", preferDirect: true },
+      { name: "디지탈창신", domain: "cscamera.com", base: "https://www.cscamera.com", preferDirect: false },
+      { name: "남대문전자상가", domain: "fjrzl4536.cafe24.com", base: "https://fjrzl4536.cafe24.com", preferDirect: true },
+      { name: "즐거운카메라", domain: "fu-gall.com", base: "https://www.fu-gall.com", preferDirect: true },
+      { name: "루트카메라", domain: "root-camera.com", base: "https://www.root-camera.com", preferDirect: true, searchPath: "/search" },
+    ];
+
+    const DB_NAME = "CameraFinderDB";
+    const STORE_NAME = "items";
+    const EXPIRY_MS = 168 * 60 * 60 * 1000; // 168시간
+
+    let db = null;
+
+    // ===================== IndexedDB =====================
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = (e) => {
+          const database = e.target.result;
+          if (!database.objectStoreNames.contains(STORE_NAME)) {
+            database.createObjectStore(STORE_NAME, { keyPath: "id", autoIncrement: true });
+          }
+        };
+        req.onsuccess = (e) => {
+          db = e.target.result;
+          resolve(db);
+        };
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function getAllItems() {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, "readonly");
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function addItem(name) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, "readwrite");
+        const store = tx.objectStore(STORE_NAME);
+        const item = {
+          name: name.trim(),
+          createdAt: Date.now()
+        };
+        const req = store.add(item);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function deleteItem(id) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, "readwrite");
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.delete(id);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function clearExpired(items) {
+      const now = Date.now();
+      const valid = [];
+      const expiredIds = [];
+      items.forEach(item => {
+        if (now - item.createdAt > EXPIRY_MS) {
+          expiredIds.push(item.id);
+        } else {
+          valid.push(item);
+        }
+      });
+      // 만료된 항목 삭제
+      expiredIds.forEach(id => deleteItem(id));
+      return valid;
+    }
+
+    // ===================== UI =====================
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 2500);
+    }
+
+    function addItemRow(value = "") {
+      const list = document.getElementById("itemList");
+      const row = document.createElement("div");
+      row.className = "item-row";
+      row.innerHTML = `
+        <input type="text" placeholder="예: 소니 A7IV 바디 / 캐논 RF 24-70 F2.8" value="${value}" />
+        <button class="btn btn-danger" onclick="this.parentElement.remove()" title="삭제">✕</button>
+      `;
+      list.appendChild(row);
+      row.querySelector("input").focus();
+    }
+
+    async function saveItems() {
+      const inputs = document.querySelectorAll("#itemList input");
+      const names = Array.from(inputs)
+        .map(i => i.value.trim())
+        .filter(v => v.length > 0);
+
+      if (names.length === 0) {
+        showToast("입력된 품목이 없습니다.");
+        return;
+      }
+
+      for (const name of names) {
+        await addItem(name);
+      }
+
+      // 입력창 초기화
+      document.getElementById("itemList").innerHTML = "";
+      addItemRow();
+
+      showToast(`${names.length}개 품목이 저장되었습니다.`);
+      renderSaved();
+    }
+
+    function getSearchLinks(keyword) {
+      const q = encodeURIComponent(keyword);
+      return SITES.map(site => {
+        // 사이트별 검색 경로 (기본값: Cafe24 스타일)
+        const path = site.searchPath || "/product/search.html";
+        const directUrl = `${site.base}${path}?keyword=${q}`;
+
+        // Google site: 검색 (백업)
+        const googleUrl = `https://www.google.com/search?q=site%3A${site.domain}+${q}`;
+
+        // preferDirect가 true이면 업체 내부 검색을 우선 사용
+        const primaryUrl = site.preferDirect ? directUrl : googleUrl;
+
+        return {
+          name: site.name,
+          primaryUrl,
+          isDirect: site.preferDirect
+        };
+      });
+    }
+
+    function formatRemaining(createdAt) {
+      const remain = EXPIRY_MS - (Date.now() - createdAt);
+      if (remain <= 0) return { text: "만료됨", cls: "danger" };
+      const hours = Math.floor(remain / (1000 * 60 * 60));
+      const days = Math.floor(hours / 24);
+      const h = hours % 24;
+      if (days >= 3) return { text: `${days}일 ${h}시간 남음`, cls: "" };
+      if (days >= 1) return { text: `${days}일 ${h}시간 남음`, cls: "warning" };
+      return { text: `${hours}시간 남음`, cls: "danger" };
+    }
+
+    async function renderSaved() {
+      const container = document.getElementById("savedList");
+      let items = await getAllItems();
+      items = clearExpired(items);
+      // 최신순
+      items.sort((a, b) => b.createdAt - a.createdAt);
+
+      document.getElementById("itemCount").textContent =
+        items.length > 0 ? `(${items.length}개)` : "";
+
+      if (items.length === 0) {
+        container.innerHTML = `
+          <div class="empty">
+            <div class="empty-icon">📦</div>
+            아직 저장된 품목이 없습니다.<br>위에서 품목을 입력하고 저장해보세요.
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = items.map(item => {
+        const remain = formatRemaining(item.createdAt);
+        const links = getSearchLinks(item.name);
+        const dateStr = new Date(item.createdAt).toLocaleString("ko-KR", {
+          month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+        });
+
+        return `
+          <div class="saved-item">
+            <div class="saved-header">
+              <div>
+                <div class="saved-name">${escapeHtml(item.name)}</div>
+                <div class="meta">저장: ${dateStr}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="expiry ${remain.cls}">${remain.text}</span>
+                <button class="btn btn-danger btn-sm" onclick="removeItem(${item.id})" title="삭제">삭제</button>
+              </div>
+            </div>
+            <div class="site-links">
+              ${links.map(l => `
+                <a class="site-btn" href="${l.primaryUrl}" target="_blank" rel="noopener"
+                   title="${l.isDirect ? l.name + ' 내부 검색' : 'Google 검색'}">${l.name}</a>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function removeItem(id) {
+      await deleteItem(id);
+      showToast("삭제되었습니다.");
+      renderSaved();
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+                .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+    }
+
+    // ===================== 초기화 =====================
+    (async function init() {
+      await openDB();
+      addItemRow(); // 기본 입력창 하나
+      renderSaved();
+
+      // 페이지가 다시 보일 때 만료 체크
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") renderSaved();
+      });
+    })();
+  </script>
+</body>
+</html>
