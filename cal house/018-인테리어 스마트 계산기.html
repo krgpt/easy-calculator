@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인테리어 종합 스마트 계산기</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter / Noto Sans KR -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for budget table */
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold text-xl shadow-md">
+                        <i class="fa-solid fa-compass-drafting"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg text-slate-900 leading-tight">인테리어 스마트 계산기</h1>
+                        <p class="text-xs text-slate-500">면적·자재·도배·예산 통합 산출 도구</p>
+                    </div>
+                </div>
+                <div class="text-xs sm:text-sm bg-brand-50 text-brand-700 px-3 py-1.5 rounded-full font-medium border border-brand-100 hidden sm:block">
+                    <i class="fa-solid fa-circle-info mr-1"></i> 현장 실무 표준 표준 공식 반영
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Navigation Tabs -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-8 bg-slate-200/60 p-1.5 rounded-2xl">
+            <button onclick="switchTab('pyung')" id="tab-pyung" class="tab-btn flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 bg-white text-brand-600 shadow-sm">
+                <i class="fa-solid fa-ruler-combined text-base"></i>
+                <span>평수 / 면적 변환</span>
+            </button>
+            <button onclick="switchTab('wallpaper')" id="tab-wallpaper" class="tab-btn flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 text-slate-600 hover:text-slate-900">
+                <i class="fa-solid fa-paint-roller text-base"></i>
+                <span>도배 & 페인트 계산</span>
+            </button>
+            <button onclick="switchTab('tile')" id="tab-tile" class="tab-btn flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 text-slate-600 hover:text-slate-900">
+                <i class="fa-solid fa-border-all text-base"></i>
+                <span>타일 & 바닥재 계산</span>
+            </button>
+            <button onclick="switchTab('budget')" id="tab-budget" class="tab-btn flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 text-slate-600 hover:text-slate-900">
+                <i class="fa-solid fa-calculator text-base"></i>
+                <span>총 공사 견적 계산</span>
+            </button>
+        </div>
+
+        <!-- Section 1: 평수 / 면적 변환기 -->
+        <section id="sec-pyung" class="tab-content block">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+                <div class="border-b border-slate-100 pb-4 mb-6">
+                    <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-ruler-combined text-brand-600"></i> 평수 - 제곱미터(㎡) 상호 변환기
+                    </h2>
+                    <p class="text-sm text-slate-500 mt-1">1평 = 약 3.30578㎡ 기준 / 1㎡ = 약 0.3025평 기준 계산</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <!-- 입력 박스 1: 평 -> m2 -->
+                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 hover:border-brand-500 transition-colors">
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">평수(坪) 입력</label>
+                        <div class="relative">
+                            <input type="number" id="input-pyung" placeholder="예: 32" step="0.1" oninput="convertFromPyung()"
+                                class="w-full px-4 py-3.5 pr-12 text-lg font-bold rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">평</span>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-slate-200 flex justify-between items-center">
+                            <span class="text-sm text-slate-600 font-medium">변환된 면적:</span>
+                            <span id="res-m2" class="text-2xl font-extrabold text-brand-600">0.00 <span class="text-base font-medium text-slate-600">㎡</span></span>
+                        </div>
+                    </div>
+
+                    <!-- 입력 박스 2: m2 -> 평 -->
+                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 hover:border-brand-500 transition-colors">
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">제곱미터(㎡) 입력</label>
+                        <div class="relative">
+                            <input type="number" id="input-m2" placeholder="예: 84" step="0.1" oninput="convertFromM2()"
+                                class="w-full px-4 py-3.5 pr-12 text-lg font-bold rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">㎡</span>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-slate-200 flex justify-between items-center">
+                            <span class="text-sm text-slate-600 font-medium">변환된 평수:</span>
+                            <span id="res-pyung" class="text-2xl font-extrabold text-brand-600">0.00 <span class="text-base font-medium text-slate-600">평</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 팁 안내 -->
+                <div class="mt-8 bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex items-start gap-3 text-xs sm:text-sm text-slate-600">
+                    <i class="fa-solid fa-lightbulb text-amber-500 text-base mt-0.5"></i>
+                    <div>
+                        <strong class="font-semibold text-slate-800">알아두면 좋은 정보:</strong> 아파트의 '전용면적 84㎡'는 흔히 말하는 '33평형~34평형(공급면적 기준)'에 해당하며, 실내 리모델링 자재 계산 시에는 실제 벽면과 바닥면의 <span class="underline underline-offset-2">전용면적(㎡)</span>을 기준으로 계산하는 것이 훨씬 정확합니다.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: 도배 & 페인트 소요량 계산기 -->
+        <section id="sec-wallpaper" class="tab-content hidden">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+                <div class="border-b border-slate-100 pb-4 mb-6">
+                    <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-paint-roller text-brand-600"></i> 공간 치수 기반 도배지 & 페인트 소요량 계산기
+                    </h2>
+                    <p class="text-sm text-slate-500 mt-1">방의 가로, 세로, 천장 높이를 입력하면 벽면/천장 총면적과 필요한 소요량을 계산합니다.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <!-- 입력 Form (7 Cols) -->
+                    <div class="lg:col-span-7 space-y-5">
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">방 가로 (m)</label>
+                                <input type="number" id="room-width" value="3.5" step="0.1" oninput="calcWallpaperAndPaint()"
+                                    class="w-full p-3 font-semibold rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">방 세로 (m)</label>
+                                <input type="number" id="room-length" value="4.0" step="0.1" oninput="calcWallpaperAndPaint()"
+                                    class="w-full p-3 font-semibold rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">천장 높이 (m)</label>
+                                <input type="number" id="room-height" value="2.3" step="0.1" oninput="calcWallpaperAndPaint()"
+                                    class="w-full p-3 font-semibold rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                        </div>
+
+                        <!-- 추가 옵션 -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">문/창문 면적 제외</label>
+                                <select id="deduct-area" onchange="calcWallpaperAndPaint()" class="w-full p-3 font-medium rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                    <option value="0">제외 없음 (기본)</option>
+                                    <option value="3" selected>소형 (문1, 창문1 - 약 3㎡ 차감)</option>
+                                    <option value="6">중형 (문1, 큰창1 - 약 6㎡ 차감)</option>
+                                    <option value="10">대형 (문2, 베란다창 - 약 10㎡ 차감)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">시공 대상 선택</label>
+                                <select id="target-surface" onchange="calcWallpaperAndPaint()" class="w-full p-3 font-medium rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                    <option value="wall-ceiling" selected>벽면 전체 + 천장 포함</option>
+                                    <option value="wall-only">벽면 전체만 (천장 제외)</option>
+                                    <option value="ceiling-only">천장만 시공</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 벽지 규격 선택 -->
+                        <div class="pt-2">
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">벽지 규격 선택</label>
+                            <select id="wallpaper-type" onchange="calcWallpaperAndPaint()" class="w-full p-3 font-medium rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                <option value="silks" selected>실크벽지 (폭 106cm × 길이 15.6m = 약 5평/롤)</option>
+                                <option value="hapji">합지 광폭 (폭 93cm × 길이 17.75m = 약 5평/롤)</option>
+                                <option value="hapji-small">합지 소폭 (폭 53cm × 길이 12.5m = 약 2평/롤)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 결과 표시 (5 Cols) -->
+                    <div class="lg:col-span-5 bg-slate-50 p-6 rounded-2xl border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800 mb-4 border-b border-slate-200 pb-2">
+                                <i class="fa-solid fa-chart-pie text-brand-600 mr-1"></i> 산출 결과 요약
+                            </h3>
+
+                            <div class="space-y-4">
+                                <div>
+                                    <span class="text-xs text-slate-500 font-medium">총 순수 시공 면적</span>
+                                    <div class="text-2xl font-black text-slate-800" id="wp-total-area">0.0 ㎡ <span class="text-sm font-normal text-slate-500">(약 0 평)</span></div>
+                                </div>
+
+                                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-sm font-bold text-slate-700"><i class="fa-solid fa-scroll text-amber-600 mr-1"></i> 필요 벽지 수량</span>
+                                        <span class="text-xl font-extrabold text-amber-600" id="wp-rolls-result">0 롤</span>
+                                    </div>
+                                    <p class="text-xs text-slate-400 mt-1">* 로스율(10~15%) 및 패턴 맞춤을 감안한 안전 수량입니다.</p>
+                                </div>
+
+                                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-sm font-bold text-slate-700"><i class="fa-solid fa-bucket text-blue-600 mr-1"></i> 필요 페인트 용량</span>
+                                        <span class="text-xl font-extrabold text-blue-600" id="wp-paint-result">0 L</span>
+                                    </div>
+                                    <p class="text-xs text-slate-400 mt-1">* 2회 칠(기본 칠) 기준, 1L당 약 6㎡ 칠 가능 기준입니다.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 text-xs text-slate-500 bg-slate-100 p-3 rounded-lg border border-slate-200">
+                            💡 <strong>전문가 팁:</strong> 벽지 시공 시 무늬(패턴)가 있는 벽지는 버려지는 도배지가 많아 추가로 1~2롤 여유 있게 주문하는 것이 좋습니다.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: 타일 & 바닥재 계산기 -->
+        <section id="sec-tile" class="tab-content hidden">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+                <div class="border-b border-slate-100 pb-4 mb-6">
+                    <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-border-all text-brand-600"></i> 타일 및 바닥재 필요 개수 / 소요 박스 계산기
+                    </h2>
+                    <p class="text-sm text-slate-500 mt-1">시공할 면적과 타일 규격을 선택하여 개수와 필요한 박스 수를 산출합니다.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <!-- 입력 폼 -->
+                    <div class="lg:col-span-7 space-y-5">
+                        <!-- 면적 입력 방식 선택 -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-2">면적 입력 방식</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="flex items-center gap-2 p-3 border rounded-xl cursor-pointer hover:bg-slate-50">
+                                    <input type="radio" name="tile-input-type" value="area" checked onchange="toggleTileInputMode()" class="text-brand-600">
+                                    <span class="text-sm font-medium">면적 직접 입력 (㎡/평)</span>
+                                </label>
+                                <label class="flex items-center gap-2 p-3 border rounded-xl cursor-pointer hover:bg-slate-50">
+                                    <input type="radio" name="tile-input-type" value="dim" onchange="toggleTileInputMode()" class="text-brand-600">
+                                    <span class="text-sm font-medium">가로 × 세로 길이 입력</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- 면적 수치 입력 -->
+                        <div id="tile-mode-area">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">면적 (㎡)</label>
+                                    <input type="number" id="tile-area-m2" value="15" step="0.1" oninput="calcTileRequirement()"
+                                        class="w-full p-3 font-semibold rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">면적 (평)</label>
+                                    <input type="number" id="tile-area-pyung" value="4.5" step="0.1" oninput="calcTileFromPyung()"
+                                        class="w-full p-3 font-semibold rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="tile-mode-dim" class="hidden">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">시공 공간 가로 (m)</label>
+                                    <input type="number" id="tile-room-w" value="3.0" step="0.1" oninput="calcTileFromDim()"
+                                        class="w-full p-3 font-semibold rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">시공 공간 세로 (m)</label>
+                                    <input type="number" id="tile-room-h" value="5.0" step="0.1" oninput="calcTileFromDim()"
+                                        class="w-full p-3 font-semibold rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 타일 크기 선택 -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">타일/자재 규격 선택</label>
+                                <select id="tile-preset" onchange="applyTilePreset()" class="w-full p-3 font-medium rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                    <option value="300x300">300 x 300 mm (소형 바닥/욕실)</option>
+                                    <option value="600x600" selected>600 x 600 mm (포셀린/거실바닥)</option>
+                                    <option value="300x600">300 x 600 mm (욕실 벽면)</option>
+                                    <option value="600x1200">600 x 1200 mm (대형 대리석타일)</option>
+                                    <option value="custom">직접 크기 입력</option>
+                                </select>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2" id="custom-tile-size-container">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">타일 가로(mm)</label>
+                                    <input type="number" id="tile-w" value="600" oninput="calcTileRequirement()" class="w-full p-3 font-semibold rounded-xl border border-slate-300">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">타일 세로(mm)</label>
+                                    <input type="number" id="tile-h" value="600" oninput="calcTileRequirement()" class="w-full p-3 font-semibold rounded-xl border border-slate-300">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 로스율 & 박스당 포장 수 -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">절단 손실률(Loss)</label>
+                                <select id="tile-loss" onchange="calcTileRequirement()" class="w-full p-3 font-medium rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                    <option value="0.05">5% (일반 직사각형 단순 공간)</option>
+                                    <option value="0.10" selected>10% (기본 권장 - 약간의 대각/코너)</option>
+                                    <option value="0.15">15% (복잡한 구조 / 대각선 시공)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">1박스당 타일 개수</label>
+                                <input type="number" id="tile-per-box" value="4" min="1" oninput="calcTileRequirement()" class="w-full p-3 font-semibold rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                <p class="text-[11px] text-slate-400 mt-1">* 600x600 타일은 보통 1박스에 4장 포장됩니다.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 결과 요약 -->
+                    <div class="lg:col-span-5 bg-slate-50 p-6 rounded-2xl border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800 mb-4 border-b border-slate-200 pb-2">
+                                <i class="fa-solid fa-square-poll-vertical text-brand-600 mr-1"></i> 타일 소요량 예상 결과
+                            </h3>
+
+                            <div class="space-y-4">
+                                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                    <div class="text-xs text-slate-500 font-medium">순수 필요 장수 (로스 미포함)</div>
+                                    <div class="text-xl font-bold text-slate-700" id="tile-pure-count">0 장</div>
+                                </div>
+
+                                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                    <div class="flex justify-between items-baseline mb-1">
+                                        <span class="text-xs text-slate-500 font-medium">최종 추천 구매 타일 장수 (로스 포함)</span>
+                                    </div>
+                                    <div class="text-2xl font-black text-brand-600" id="tile-total-count">0 장</div>
+                                </div>
+
+                                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 text-emerald-900">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm font-bold"><i class="fa-solid fa-box-open mr-1"></i> 총 구매 박스 수</span>
+                                        <span class="text-2xl font-black text-emerald-700" id="tile-box-count">0 박스</span>
+                                    </div>
+                                    <p class="text-xs text-emerald-600 mt-1">* 박스 단위 판매이므로 올림 처리된 박스 수량입니다.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 text-xs text-slate-500 bg-slate-100 p-3 rounded-lg border border-slate-200">
+                            💡 <strong>주의:</strong> 타일은 생산 회차(Lot)에 따라 미세한 색상 차이가 발생할 수 있으므로, 시공 중 깨짐이나 향후 보수를 위해 1~2박스 여유있게 확보하는 것이 좋습니다.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: 통합 공사 예산 견적기 -->
+        <section id="sec-budget" class="tab-content hidden">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+                <div class="border-b border-slate-100 pb-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-calculator text-brand-600"></i> 인테리어 공사 항목별 견적 산출기
+                        </h2>
+                        <p class="text-sm text-slate-500 mt-1">공정별 예산을 입력하고 총 공사비용 및 비율을 한눈에 확인하세요.</p>
+                    </div>
+                    <button onclick="addBudgetItem()" class="self-start sm:self-auto px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm rounded-xl shadow-sm transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> 항목 추가하기
+                    </button>
+                </div>
+
+                <!-- 예산 테이블 -->
+                <div class="overflow-x-auto custom-scrollbar mb-6">
+                    <table class="w-full text-left border-collapse min-w-[600px]">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 text-xs font-bold uppercase tracking-wider">
+                                <th class="p-3.5 rounded-l-xl">공정 구분</th>
+                                <th class="p-3.5">세부 내용 / 메모</th>
+                                <th class="p-3.5 w-48">예상 금액 (원)</th>
+                                <th class="p-3.5 w-16 text-center rounded-r-xl">삭제</th>
+                            </tr>
+                        </thead>
+                        <tbody id="budget-items-body" class="divide-y divide-slate-100 text-sm">
+                            <!-- JS로 항목 삽입됨 -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 견적 하단 총합 및 시각화 -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-4 border-t border-slate-200">
+                    <!-- 총 금액 합계 -->
+                    <div class="lg:col-span-5 bg-slate-900 text-white p-6 rounded-2xl shadow-lg">
+                        <span class="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">총 예상 인테리어 공사비</span>
+                        <div class="text-3xl sm:text-4xl font-black text-brand-100 mb-2" id="total-budget-text">0 원</div>
+                        <p class="text-xs text-slate-400" id="total-budget-in-pyung">공사 단가: 평당 약 0 만원 (32평 기준 예시)</p>
+                    </div>
+
+                    <!-- 공정별 비중 프로그레스 바 -->
+                    <div class="lg:col-span-7 space-y-3">
+                        <h4 class="text-sm font-bold text-slate-700">공정별 예산 비중 그래프</h4>
+                        <div class="h-4 w-full bg-slate-100 rounded-full overflow-hidden flex" id="budget-progress-bar">
+                            <!-- 동적 게이지 바 -->
+                        </div>
+                        <div class="flex flex-wrap gap-3 text-xs" id="budget-legend">
+                            <!-- 범례 동적 삽입 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-auto py-6">
+        <div class="max-w-6xl mx-auto px-4 text-center text-xs text-slate-400">
+            <p>본 계산기는 일반적인 표준 수치를 기반으로 한 자재 및 견적 단순 참고용 도구입니다.</p>
+            <p class="mt-1">실제 현장 상황, 자재 로스율 및 시공 업체에 따라 약간의 차이가 발생할 수 있습니다.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // 탭 전환 기능
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-white', 'text-brand-600', 'shadow-sm');
+                el.classList.add('text-slate-600');
+            });
+
+            document.getElementById('sec-' + tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('tab-' + tabId);
+            activeBtn.classList.add('bg-white', 'text-brand-600', 'shadow-sm');
+            activeBtn.classList.remove('text-slate-600');
+        }
+
+        // 1. 평수 <-> m2 변환 연산
+        const PYUNG_FACTOR = 3.30578;
+
+        function convertFromPyung() {
+            const pyungVal = parseFloat(document.getElementById('input-pyung').value);
+            if (!isNaN(pyungVal) && pyungVal >= 0) {
+                const m2Val = pyungVal * PYUNG_FACTOR;
+                document.getElementById('res-m2').innerHTML = `${m2Val.toFixed(2)} <span class="text-base font-medium text-slate-600">㎡</span>`;
+                document.getElementById('input-m2').value = m2Val.toFixed(2);
+            } else {
+                document.getElementById('res-m2').innerHTML = `0.00 <span class="text-base font-medium text-slate-600">㎡</span>`;
+                document.getElementById('input-m2').value = '';
+            }
+        }
+
+        function convertFromM2() {
+            const m2Val = parseFloat(document.getElementById('input-m2').value);
+            if (!isNaN(m2Val) && m2Val >= 0) {
+                const pyungVal = m2Val / PYUNG_FACTOR;
+                document.getElementById('res-pyung').innerHTML = `${pyungVal.toFixed(2)} <span class="text-base font-medium text-slate-600">평</span>`;
+                document.getElementById('input-pyung').value = pyungVal.toFixed(2);
+            } else {
+                document.getElementById('res-pyung').innerHTML = `0.00 <span class="text-base font-medium text-slate-600">평</span>`;
+                document.getElementById('input-pyung').value = '';
+            }
+        }
+
+        // 2. 도배 & 페인트 계산
+        function calcWallpaperAndPaint() {
+            const w = parseFloat(document.getElementById('room-width').value) || 0;
+            const l = parseFloat(document.getElementById('room-length').value) || 0;
+            const h = parseFloat(document.getElementById('room-height').value) || 0;
+            
+            const deduct = parseFloat(document.getElementById('deduct-area').value) || 0;
+            const surface = document.getElementById('target-surface').value;
+            const wpType = document.getElementById('wallpaper-type').value;
+
+            // 면적 산출
+            const wallArea = Math.max(0, (2 * (w + l) * h) - deduct);
+            const ceilingArea = w * l;
+
+            let totalArea = 0;
+            if (surface === 'wall-ceiling') {
+                totalArea = wallArea + ceilingArea;
+            } else if (surface === 'wall-only') {
+                totalArea = wallArea;
+            } else if (surface === 'ceiling-only') {
+                totalArea = ceilingArea;
+            }
+
+            const totalPyung = totalArea / PYUNG_FACTOR;
+
+            // 벽지 종류별 1롤당 커버 평수 (로스 포함)
+            let pyungPerRoll = 5; // 기본 실크 / 광폭합지 (약 5평/롤)
+            if (wpType === 'hapji-small') {
+                pyungPerRoll = 2; // 소폭합지 (약 2평/롤)
+            }
+
+            // 필요 롤수 계산 (로스율 10% 감안)
+            const neededRolls = Math.ceil((totalPyung * 1.1) / pyungPerRoll);
+
+            // 페인트 필요 용량 계산 (1L당 2회 칠 기준 약 6㎡ 칠함)
+            const paintLiters = (totalArea / 6).toFixed(1);
+
+            // UI 바인딩
+            document.getElementById('wp-total-area').innerHTML = `${totalArea.toFixed(1)} ㎡ <span class="text-sm font-normal text-slate-500">(약 ${totalPyung.toFixed(1)} 평)</span>`;
+            document.getElementById('wp-rolls-result').innerText = `${neededRolls} 롤`;
+            document.getElementById('wp-paint-result').innerText = `${paintLiters} L`;
+        }
+
+        // 3. 타일 계산기
+        function toggleTileInputMode() {
+            const mode = document.querySelector('input[name="tile-input-type"]:checked').value;
+            if (mode === 'area') {
+                document.getElementById('tile-mode-area').classList.remove('hidden');
+                document.getElementById('tile-mode-dim').classList.add('hidden');
+            } else {
+                document.getElementById('tile-mode-area').classList.add('hidden');
+                document.getElementById('tile-mode-dim').classList.remove('hidden');
+            }
+            calcTileRequirement();
+        }
+
+        function applyTilePreset() {
+            const preset = document.getElementById('tile-preset').value;
+            const customContainer = document.getElementById('custom-tile-size-container');
+            
+            if (preset === '300x300') {
+                document.getElementById('tile-w').value = 300;
+                document.getElementById('tile-h').value = 300;
+                document.getElementById('tile-per-box').value = 10;
+            } else if (preset === '600x600') {
+                document.getElementById('tile-w').value = 600;
+                document.getElementById('tile-h').value = 600;
+                document.getElementById('tile-per-box').value = 4;
+            } else if (preset === '300x600') {
+                document.getElementById('tile-w').value = 300;
+                document.getElementById('tile-h').value = 600;
+                document.getElementById('tile-per-box').value = 8;
+            } else if (preset === '600x1200') {
+                document.getElementById('tile-w').value = 600;
+                document.getElementById('tile-h').value = 1200;
+                document.getElementById('tile-per-box').value = 2;
+            }
+            calcTileRequirement();
+        }
+
+        function calcTileFromPyung() {
+            const pyung = parseFloat(document.getElementById('tile-area-pyung').value) || 0;
+            document.getElementById('tile-area-m2').value = (pyung * PYUNG_FACTOR).toFixed(2);
+            calcTileRequirement();
+        }
+
+        function calcTileFromDim() {
+            const w = parseFloat(document.getElementById('tile-room-w').value) || 0;
+            const h = parseFloat(document.getElementById('tile-room-h').value) || 0;
+            const m2 = w * h;
+            document.getElementById('tile-area-m2').value = m2.toFixed(2);
+            document.getElementById('tile-area-pyung').value = (m2 / PYUNG_FACTOR).toFixed(2);
+            calcTileRequirement();
+        }
+
+        function calcTileRequirement() {
+            const mode = document.querySelector('input[name="tile-input-type"]:checked').value;
+            let m2 = 0;
+
+            if (mode === 'area') {
+                m2 = parseFloat(document.getElementById('tile-area-m2').value) || 0;
+            } else {
+                const w = parseFloat(document.getElementById('tile-room-w').value) || 0;
+                const h = parseFloat(document.getElementById('tile-room-h').value) || 0;
+                m2 = w * h;
+            }
+
+            const tileW = (parseFloat(document.getElementById('tile-w').value) || 300) / 1000; // m 단위 변환
+            const tileH = (parseFloat(document.getElementById('tile-h').value) || 300) / 1000;
+            const lossRate = parseFloat(document.getElementById('tile-loss').value) || 0.1;
+            const perBox = parseInt(document.getElementById('tile-per-box').value) || 1;
+
+            const singleTileArea = tileW * tileH;
+            
+            if (singleTileArea <= 0 || m2 <= 0) {
+                document.getElementById('tile-pure-count').innerText = '0 장';
+                document.getElementById('tile-total-count').innerText = '0 장';
+                document.getElementById('tile-box-count').innerText = '0 박스';
+                return;
+            }
+
+            const pureCount = Math.ceil(m2 / singleTileArea);
+            const totalCountWithLoss = Math.ceil((m2 * (1 + lossRate)) / singleTileArea);
+            const boxCount = Math.ceil(totalCountWithLoss / perBox);
+
+            document.getElementById('tile-pure-count').innerText = `${pureCount.toLocaleString()} 장`;
+            document.getElementById('tile-total-count').innerText = `${totalCountWithLoss.toLocaleString()} 장`;
+            document.getElementById('tile-box-count').innerText = `${boxCount.toLocaleString()} 박스`;
+        }
+
+        // 4. 예산 견적 계산기 데이터 및 로직
+        let budgetItems = [
+            { id: 1, category: '목공 / 중문', note: '몰딩, 가벽, 중문 설치', cost: 3500000, color: 'bg-amber-500' },
+            { id: 2, category: '욕실 리모델링', note: '안방 & 거실 욕실 2개소 타일 및 도기', cost: 6000000, color: 'bg-blue-500' },
+            { id: 3, category: '바닥재 / 타일', note: '거실 포셀린 타일, 방 강마루', cost: 4500000, color: 'bg-emerald-500' },
+            { id: 4, category: '도배 공사', note: '전체 실크벽지 시공', cost: 2500000, color: 'bg-purple-500' },
+            { id: 5, category: '조명 / 전기', note: '다운라이트, 스위치, 매립등 작업', cost: 1800000, color: 'bg-rose-500' }
+        ];
+
+        const COLOR_PALETTE = ['bg-amber-500', 'bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-rose-500', 'bg-indigo-500', 'bg-teal-500', 'bg-orange-500'];
+
+        function renderBudgetTable() {
+            const tbody = document.getElementById('budget-items-body');
+            tbody.innerHTML = '';
+
+            budgetItems.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="p-3">
+                        <input type="text" value="${item.category}" onchange="updateBudgetItem(${item.id}, 'category', this.value)"
+                            class="w-full bg-transparent font-semibold text-slate-800 focus:outline-none focus:border-b focus:border-brand-500">
+                    </td>
+                    <td class="p-3">
+                        <input type="text" value="${item.note}" onchange="updateBudgetItem(${item.id}, 'note', this.value)"
+                            class="w-full bg-transparent text-slate-500 text-xs focus:outline-none focus:border-b focus:border-brand-500">
+                    </td>
+                    <td class="p-3">
+                        <input type="number" value="${item.cost}" step="10000" oninput="updateBudgetItem(${item.id}, 'cost', this.value)"
+                            class="w-full p-2 font-bold text-right rounded-lg border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </td>
+                    <td class="p-3 text-center">
+                        <button onclick="removeBudgetItem(${item.id})" class="text-slate-400 hover:text-rose-500 transition-colors p-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            calculateTotalBudget();
+        }
+
+        function addBudgetItem() {
+            const newId = Date.now();
+            const colorIndex = budgetItems.length % COLOR_PALETTE.length;
+            budgetItems.push({
+                id: newId,
+                category: '신규 공정',
+                note: '세부 내용 입력',
+                cost: 1000000,
+                color: COLOR_PALETTE[colorIndex]
+            });
+            renderBudgetTable();
+        }
+
+        function updateBudgetItem(id, field, value) {
+            const item = budgetItems.find(i => i.id === id);
+            if (item) {
+                if (field === 'cost') {
+                    item[field] = parseFloat(value) || 0;
+                } else {
+                    item[field] = value;
+                }
+                calculateTotalBudget();
+            }
+        }
+
+        function removeBudgetItem(id) {
+            budgetItems = budgetItems.filter(i => i.id !== id);
+            renderBudgetTable();
+        }
+
+        function calculateTotalBudget() {
+            const total = budgetItems.reduce((sum, item) => sum + item.cost, 0);
+            
+            // 총액 업데이트
+            document.getElementById('total-budget-text').innerText = `${total.toLocaleString()} 원`;
+
+            // 프로그레스 바 및 범례 생성
+            const progressBar = document.getElementById('budget-progress-bar');
+            const legend = document.getElementById('budget-legend');
+            progressBar.innerHTML = '';
+            legend.innerHTML = '';
+
+            if (total === 0) return;
+
+            budgetItems.forEach(item => {
+                const percentage = ((item.cost / total) * 100).toFixed(1);
+                
+                // 프로그레스 바 영역
+                const barSegment = document.createElement('div');
+                barSegment.className = `${item.color} h-full transition-all duration-300`;
+                barSegment.style.width = `${percentage}%`;
+                barSegment.title = `${item.category}: ${percentage}%`;
+                progressBar.appendChild(barSegment);
+
+                // 범례 표시
+                const legendItem = document.createElement('div');
+                legendItem.className = 'flex items-center gap-1.5';
+                legendItem.innerHTML = `
+                    <span class="w-3 h-3 rounded-full ${item.color}"></span>
+                    <span class="font-medium text-slate-700">${item.category}</span>
+                    <span class="text-slate-400">(${percentage}%)</span>
+                `;
+                legend.appendChild(legendItem);
+            });
+        }
+
+        // 초기화 실행
+        window.onload = function() {
+            convertFromPyung();
+            calcWallpaperAndPaint();
+            calcTileRequirement();
+            renderBudgetTable();
+        }
+    </script>
+<script src="../js/protection.js"></script>
+</body>
+</html>

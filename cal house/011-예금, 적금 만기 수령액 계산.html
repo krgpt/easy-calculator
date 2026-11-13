@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>예금·적금 만기 수령액 계산기</title>
+<style>
+:root{--navy:#17365d;--blue:#2463eb;--sky:#eaf2ff;--ink:#172033;--muted:#667085;--line:#e5eaf1;--bg:#f5f7fb;--green:#087a55;--orange:#a64b00}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,"Noto Sans KR",sans-serif;line-height:1.55}
+.wrap{max-width:1000px;margin:32px auto;padding:0 18px 48px}
+header{margin-bottom:22px}h1{font-size:clamp(25px,4vw,34px);margin:0 0 7px;color:#132b4b}header p{margin:0;color:var(--muted);font-size:15px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:0 8px 28px rgba(25,45,80,.05);margin-bottom:18px}
+.tabs{display:flex;gap:9px;margin-bottom:22px}.tab{border:1px solid #cbd5e1;background:#fff;color:#344054;border-radius:12px;padding:12px 22px;font-weight:800;font-size:16px;cursor:pointer}.tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 20px}.field label{display:block;font-weight:800;font-size:15px;margin-bottom:7px}.hint{font-size:12px;color:var(--muted);font-weight:500;margin-left:5px}
+input,select{width:100%;border:1.5px solid #cbd5e1;border-radius:10px;padding:13px 12px;font-size:17px;color:#172033;background:#fff;outline:none}
+input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px #2463eb20}
+.important label{color:#1748a0}.important input{border:2px solid #75a2ff;background:#f8fbff;font-weight:700}
+.smallnote{font-size:12px;color:var(--muted);margin-top:6px}.radioLine{display:flex;gap:8px;flex-wrap:wrap}.radioLine label{display:flex;align-items:center;gap:6px;border:1px solid var(--line);padding:9px 12px;border-radius:9px;font-weight:600;cursor:pointer}.radioLine input{width:auto;accent-color:var(--blue)}
+.result{background:linear-gradient(135deg,#102b50,#1e4f86);color:#fff;border-radius:16px;padding:23px;margin-top:24px}
+.result .eyebrow{font-size:14px;color:#c9dcf7;font-weight:700}.total{font-size:clamp(30px,5vw,42px);font-weight:900;letter-spacing:-1px;margin:4px 0 16px;overflow-wrap:anywhere}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{background:#ffffff16;border:1px solid #ffffff24;border-radius:11px;padding:12px}.stat span{display:block;color:#d3e2f6;font-size:12px}.stat strong{font-size:17px;display:block;margin-top:4px}
+.breakdown{margin-top:18px;border:1px solid var(--line);border-radius:12px;overflow:hidden}.row{display:flex;justify-content:space-between;gap:14px;padding:12px 15px;border-bottom:1px solid var(--line);font-size:14px}.row:last-child{border:0}.row b{font-variant-numeric:tabular-nums}.row.final{background:#f0f6ff;font-weight:900;color:#1748a0;font-size:16px}
+.notice{padding:14px 16px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#7c3e08;font-size:13px;margin-top:18px}
+.info{padding:14px 16px;border-radius:12px;background:#f0fdf8;border:1px solid #b8ead7;color:#155b45;font-size:13px;margin-top:12px}
+button.calc{margin-top:20px;background:var(--blue);border:0;color:#fff;border-radius:11px;padding:13px 24px;font-size:16px;font-weight:800;cursor:pointer}button.calc:hover{background:#174ec7}
+footer{color:var(--muted);font-size:12px;text-align:center;margin-top:20px}
+@media(max-width:650px){.wrap{margin:18px auto}.panel{padding:17px}.grid{grid-template-columns:1fr;gap:14px}.stats{grid-template-columns:1fr}.tab{flex:1;padding:11px 8px}.total{font-size:31px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>예금·적금 만기 수령액 계산기</h1>
+<p>얼마를 넣고, 이자를 얼마나 받고, 세금을 뺀 뒤 얼마를 받는지 쉽게 확인하세요.</p>
+</header>
+<section class="panel">
+<div class="tabs" role="tablist">
+<button class="tab active" id="depositTab" onclick="setMode('deposit')">정기예금 · 목돈 맡기기</button>
+<button class="tab" id="savingTab" onclick="setMode('saving')">정기적금 · 매달 저축하기</button>
+</div>
+<div class="grid">
+<div class="field important" id="amountField">
+<label id="amountLabel">처음 맡길 금액 <span class="hint">가장 중요한 입력값</span></label>
+<input id="amount" type="number" min="1" step="10000" value="10000000">
+<div class="smallnote" id="amountHint">예: 1,000만 원을 한 번에 예치하는 경우</div>
+</div>
+<div class="field important">
+<label>연 이자율(세전) <span class="hint">상품 안내의 기본/우대금리 확인</span></label>
+<input id="rate" type="number" min="0" max="100" step="0.01" value="3.5">
+<div class="smallnote">숫자만 입력하세요. 예: 연 3.5%라면 3.5 입력</div>
+</div>
+<div class="field important">
+<label>저축 기간</label>
+<select id="months">
+<option value="3">3개월</option><option value="6">6개월</option><option value="12" selected>12개월(1년)</option><option value="18">18개월</option><option value="24">24개월(2년)</option><option value="36">36개월(3년)</option><option value="48">48개월(4년)</option><option value="60">60개월(5년)</option>
+</select>
+<div class="smallnote">가입 기간과 만기일은 실제 상품 조건을 확인하세요.</div>
+</div>
+<div class="field">
+<label>이자 계산 방식</label>
+<div class="radioLine">
+<label><input type="radio" name="interest" value="simple" checked> 단리</label>
+<label><input type="radio" name="interest" value="compound"> 월복리</label>
+</div>
+<div class="smallnote">잘 모르겠다면 단리를 선택하세요. 상품 설명서에 복리라고 명시된 경우만 변경하세요.</div>
+</div>
+<div class="field important">
+<label>이자에 적용되는 세금</label>
+<select id="tax">
+<option value="15.4" selected>일반과세 · 15.4%</option>
+<option value="0">비과세 · 0%</option>
+<option value="custom">세율 직접 입력</option>
+</select>
+<div class="smallnote">대부분의 일반 예·적금은 15.4%입니다. 비과세는 가입 자격·한도가 있는 경우에만 선택하세요.</div>
+</div>
+<div class="field" id="customTaxField" style="display:none">
+<label>직접 입력할 세율(%)</label>
+<input id="customTax" type="number" min="0" max="100" step="0.1" value="9.5">
+<div class="smallnote">상품 안내문에 적힌 실제 세율을 입력하세요.</div>
+</div>
+</div>
+<button class="calc" onclick="calculate()">만기 수령액 계산하기</button>
+
+<div class="result" aria-live="polite">
+<div class="eyebrow">예상 만기 수령액 · 세금 차감 후</div>
+<div class="total" id="total">10,295,?00원</div>
+<div class="stats">
+<div class="stat"><span>내가 넣은 원금</span><strong id="principal">10,000,000원</strong></div>
+<div class="stat"><span>세전 이자</span><strong id="gross">350,000원</strong></div>
+<div class="stat"><span>세금 합계</span><strong id="taxAmount">-53,900원</strong></div>
+</div>
+</div>
+<div class="breakdown">
+<div class="row"><span>납입 원금 합계</span><b id="bPrincipal">10,000,000원</b></div>
+<div class="row"><span>세전 이자</span><b id="bGross">350,000원</b></div>
+<div class="row"><span>이자소득세 등 예상 세금</span><b id="bTax">-53,900원</b></div>
+<div class="row"><span>세후 이자</span><b id="netInterest">296,100원</b></div>
+<div class="row final"><span>최종 예상 만기 수령액</span><b id="bTotal">10,296,100원</b></div>
+</div>
+<div class="info" id="explain">예금은 맡긴 원금 전체에 대해 약정 기간 동안 이자가 계산됩니다.</div>
+<div class="notice">꼭 확인하세요: 이 계산은 이해를 돕기 위한 예상치입니다. 실제 은행 지급액은 예치·납입일, 만기일의 일수, 원 단위 절사, 우대금리 충족 여부, 상품별 이자 계산 규칙에 따라 달라질 수 있습니다. 중도해지하면 약정 만기 이율이 적용되지 않을 수 있습니다.</div>
+</section>
+<footer>계산 결과는 참고용이며, 실제 가입 전에는 해당 금융기관의 상품설명서와 세금 적용 조건을 확인하세요.</footer>
+</div>
+<script>
+let mode='deposit';
+const won=n=>Math.round(n).toLocaleString('ko-KR')+'원';
+function setMode(m){
+ mode=m;
+ document.getElementById('depositTab').classList.toggle('active',m==='deposit');
+ document.getElementById('savingTab').classList.toggle('active',m==='saving');
+ document.getElementById('amountLabel').innerHTML=m==='deposit'?'처음 맡길 금액 <span class="hint">가장 중요한 입력값</span>':'매달 저축할 금액 <span class="hint">가장 중요한 입력값</span>';
+ document.getElementById('amountHint').textContent=m==='deposit'?'예: 1,000만 원을 한 번에 예치하는 경우':'예: 매월 50만 원씩 자동이체하는 경우';
+ document.getElementById('amount').value=m==='deposit'?10000000:500000;
+ calculate();
+}
+document.getElementById('tax').addEventListener('change',()=>{
+ document.getElementById('customTaxField').style.display=document.getElementById('tax').value==='custom'?'block':'none';calculate();
+});
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',calculate));
+function calculate(){
+ const amount=Math.max(0,Number(document.getElementById('amount').value)||0);
+ const annual=Math.max(0,Number(document.getElementById('rate').value)||0)/100;
+ const n=Math.max(1,Number(document.getElementById('months').value)||12);
+ const compound=document.querySelector('input[name="interest"]:checked').value==='compound';
+ const taxChoice=document.getElementById('tax').value;
+ const taxRate=taxChoice==='custom'?Math.min(1,Math.max(0,(Number(document.getElementById('customTax').value)||0)/100)):Number(taxChoice)/100;
+ let principal,gross;
+ if(mode==='deposit'){
+   principal=amount;
+   gross=compound?amount*(Math.pow(1+annual/12,n)-1):amount*annual*n/12;
+ }else{
+   principal=amount*n; gross=0;
+   for(let i=0;i<n;i++){
+     const remaining=n-i;
+     gross += compound ? amount*(Math.pow(1+annual/12,remaining)-1) : amount*annual*remaining/12;
+   }
+ }
+ gross=Math.max(0,gross);
+ const tax=Math.floor(gross*taxRate);
+ const net=gross-tax,total=principal+net;
+ document.getElementById('total').textContent=won(total);
+ document.getElementById('principal').textContent=won(principal);
+ document.getElementById('gross').textContent=won(gross);
+ document.getElementById('taxAmount').textContent='-'+won(tax);
+ document.getElementById('bPrincipal').textContent=won(principal);
+ document.getElementById('bGross').textContent=won(gross);
+ document.getElementById('bTax').textContent='-'+won(tax);
+ document.getElementById('netInterest').textContent=won(net);
+ document.getElementById('bTotal').textContent=won(total);
+ document.getElementById('explain').textContent=mode==='deposit'
+ ? '예금은 목돈을 한 번에 맡깁니다. '+(compound?'월복리는 매월 이자를 원금에 더해 다음 달 이자를 계산하는 방식입니다.':'단리는 처음 맡긴 원금에 대해서만 이자를 계산하는 방식입니다.')
+ : '적금은 매월 납입한 돈마다 예치 기간이 다릅니다. 첫 회차 납입금은 오래, 마지막 회차 납입금은 짧게 이자가 붙으므로 같은 금리의 예금보다 이자가 적을 수 있습니다. '+(compound?'월복리는 각 회차 납입금에 남은 개월 수만큼 복리를 적용했습니다.':'단리는 각 회차 납입금에 남은 개월 수만큼 이자를 계산했습니다.');
+}
+calculate();
+</script>
+<script src="../js/protection.js"></script>
+</body>
+</html>

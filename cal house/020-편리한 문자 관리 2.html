@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>올인원 텍스트 & 데이터 마법 스튜디오 v3</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .accordion-content {
+      transition: max-height 0.35s ease-out, opacity 0.35s ease-out;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+    }
+    .accordion-content.open {
+      max-height: 2500px;
+      opacity: 1;
+    }
+
+    /* 버튼 기본 스타일 */
+    .tool-btn,
+    .tool-btn-primary {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 6px 10px;
+      margin: 0;
+      border-radius: 6px;
+      font-size: 12px;
+      line-height: 1.4;
+      cursor: pointer;
+      box-sizing: border-box;
+      transition: background-color 0.15s, color 0.15s;
+    }
+
+    .tool-btn {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+      font-weight: 500;
+    }
+    .tool-btn:hover {
+      background: #eef2ff;
+      color: #4338ca;
+      border-color: #c7d2fe;
+    }
+
+    .tool-btn-primary {
+      background: #4f46e5;
+      border: 1px solid #4f46e5;
+      color: #ffffff;
+      font-weight: 700;
+    }
+    .tool-btn-primary:hover {
+      background: #4338ca;
+      border-color: #4338ca;
+    }
+
+    /* flex 행 안에서 쓰일 때 */
+    .tool-btn.flex-1 {
+      width: auto;
+      flex: 1;
+    }
+
+    /* 버튼 그룹 세로 배열 */
+    .btn-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .param-input {
+      display: block;
+      width: 100%;
+      padding: 5px 8px;
+      font-size: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      box-sizing: border-box;
+      outline: none;
+    }
+    .param-input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 1px #6366f1;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans">
+
+  <!-- Header -->
+  <header class="bg-indigo-600 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-5 flex flex-col md:flex-row justify-between items-center gap-3">
+      <div>
+        <h1 class="text-2xl font-bold flex items-center gap-2">
+          <i data-lucide="wand-2" class="w-7 h-7"></i>
+          올인원 텍스트 & 데이터 마법 스튜디오 <span class="text-indigo-200 text-lg font-normal">v3</span>
+        </h1>
+        <p class="text-indigo-100 text-sm mt-1">문서 작업 · 실무 · 개발자 · 한국어 특화까지 한 곳에서 · 100% 로컬 처리</p>
+      </div>
+      <div class="flex items-center gap-2 text-xs bg-indigo-700 px-3 py-1.5 rounded-full text-indigo-200 border border-indigo-500">
+        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+        <span>서버 전송 없음 · 개인정보 안전</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+
+    <!-- 1. Workbench -->
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+      <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+        <i data-lucide="edit-3" class="w-5 h-5 text-indigo-600"></i>
+        텍스트 & 데이터 변환 작업실
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- Input -->
+        <div class="flex flex-col">
+          <div class="flex justify-between items-center mb-1.5">
+            <label class="text-sm font-semibold text-slate-700">원본 텍스트 (입력 A)</label>
+            <button id="clearBtn" class="text-xs text-slate-500 hover:text-red-600 flex items-center gap-1">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> 초기화
+            </button>
+          </div>
+          <textarea id="inputText" rows="11" class="w-full p-3 text-sm font-mono border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-y bg-slate-50 focus:bg-white" placeholder="여기에 텍스트를 입력하거나 붙여넣으세요..."></textarea>
+          <div class="mt-1 text-right text-xs text-slate-400 font-mono" id="inputStats">0자 | 0줄</div>
+        </div>
+
+        <!-- Output -->
+        <div class="flex flex-col">
+          <div class="flex justify-between items-center mb-1.5">
+            <label class="text-sm font-semibold text-slate-700">변환 결과 (출력 B)</label>
+            <button id="copyBtn" class="text-xs font-semibold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-2.5 py-1 rounded flex items-center gap-1">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i> 결과 복사
+            </button>
+          </div>
+          <textarea id="outputText" rows="11" class="w-full p-3 text-sm font-mono border border-slate-300 rounded-lg bg-slate-100 outline-none resize-y" placeholder="결과가 여기에 표시됩니다."></textarea>
+          <div class="mt-1 text-right text-xs text-slate-400 font-mono" id="outputStats">0자 | 0줄</div>
+        </div>
+      </div>
+
+      <!-- ===== Tool Groups ===== -->
+      <div class="mt-6 pt-5 border-t border-slate-100 space-y-4">
+
+        <!-- Row 1: 일반 사용자 중심 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+
+          <!-- Group A: 기본 정제 -->
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+            <div class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">1. 기본 정제</div>
+            <div class="btn-stack">
+              <button onclick="transformText('removeNewlines')" class="tool-btn">줄바꿈 → 공백</button>
+              <button onclick="transformText('removeEmptyLines')" class="tool-btn">빈 줄 제거</button>
+              <button onclick="transformText('trimSpaces')" class="tool-btn">연속 공백 축소</button>
+              <button onclick="transformText('removeSpecialChars')" class="tool-btn">특수문자/이모지 제거</button>
+              <button onclick="transformText('stripHtml')" class="tool-btn">HTML 태그 제거</button>
+            </div>
+          </div>
+
+          <!-- Group B: 찾기/바꾸기 & 편집 -->
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+            <div class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">2. 찾기 · 바꾸기 · 편집</div>
+            <div class="btn-stack">
+              <input id="findText" class="param-input" placeholder="찾을 내용">
+              <input id="replaceText" class="param-input" placeholder="바꿀 내용">
+              <label class="flex items-center gap-1.5 text-xs text-slate-600">
+                <input type="checkbox" id="findRegex" class="rounded"> 정규식 사용
+              </label>
+              <button onclick="transformText('findReplace')" class="tool-btn-primary">찾기 & 바꾸기 실행</button>
+              <div class="border-t border-slate-200 pt-2 mt-1 btn-stack">
+                <input id="prefixText" class="param-input" placeholder="앞에 붙일 내용 (접두사)">
+                <input id="suffixText" class="param-input" placeholder="뒤에 붙일 내용 (접미사)">
+                <button onclick="transformText('addPrefixSuffix')" class="tool-btn">접두사/접미사 일괄 추가</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Group C: 정렬 & 구조 -->
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+            <div class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">3. 정렬 · 구조화</div>
+            <div class="btn-stack">
+              <button onclick="transformText('sortAsc')" class="tool-btn">가나다/알파벳 오름차순</button>
+              <button onclick="transformText('sortDesc')" class="tool-btn">가나다/알파벳 내림차순</button>
+              <button onclick="transformText('removeDuplicates')" class="tool-btn">중복 줄 제거</button>
+              <button onclick="transformText('reverseLines')" class="tool-btn">줄 순서 뒤집기</button>
+              <button onclick="transformText('addLineNumbers')" class="tool-btn">줄 번호 부여</button>
+              <button onclick="transformText('reverseChars')" class="tool-btn">글자 단위 뒤집기</button>
+            </div>
+          </div>
+
+          <!-- Group D: 추출 & 통계 -->
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+            <div class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">4. 추출 · 통계</div>
+            <div class="btn-stack">
+              <button onclick="transformText('textStats')" class="tool-btn-primary">텍스트 통계 분석</button>
+              <button onclick="transformText('uniqueWords')" class="tool-btn">고유 단어 목록</button>
+              <button onclick="transformText('extractNumbers')" class="tool-btn">숫자 추출 + 합계</button>
+              <button onclick="transformText('extractEmails')" class="tool-btn">이메일만 추출</button>
+              <button onclick="transformText('extractPhones')" class="tool-btn">전화번호만 추출</button>
+              <button onclick="transformText('extractUrls')" class="tool-btn">URL만 추출</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+
+          <!-- Group E: 데이터 변환 -->
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+            <div class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">5. 데이터 변환</div>
+            <div class="btn-stack">
+              <button onclick="transformText('jsonBeautify')" class="tool-btn">JSON 정렬 (Beautify)</button>
+              <button onclick="transformText('jsonMinify')" class="tool-btn">JSON 압축 (Minify)</button>
+              <button onclick="transformText('csvToJson')" class="tool-btn">CSV/Tab → JSON</button>
+              <button onclick="transformText('jsonToCsv')" class="tool-btn">JSON → CSV</button>
+              <button onclick="transformText('queryToJson')" class="tool-btn">쿼리스트링 → JSON</button>
+              <button onclick="transformText('jsonToQuery')" class="tool-btn">JSON → 쿼리스트링</button>
+            </div>
+          </div>
+
+          <!-- Group F: 숫자·날짜·인코딩 -->
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+            <div class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">6. 숫자 · 날짜 · 인코딩</div>
+            <div class="btn-stack">
+              <button onclick="transformText('addComma')" class="tool-btn">숫자 천단위 콤마 추가</button>
+              <button onclick="transformText('removeComma')" class="tool-btn">천단위 콤마 제거</button>
+              <button onclick="transformText('timestampToDate')" class="tool-btn">UNIX시간 → 날짜</button>
+              <button onclick="transformText('dateToTimestamp')" class="tool-btn">날짜 → UNIX시간</button>
+              <button onclick="transformText('urlEncode')" class="tool-btn">URL 인코딩</button>
+              <button onclick="transformText('urlDecode')" class="tool-btn">URL 디코딩</button>
+            </div>
+          </div>
+
+          <!-- Group G: 생성 도구 -->
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+            <div class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">7. 생성 도구</div>
+            <div class="btn-stack">
+              <button onclick="transformText('generateUUID')" class="tool-btn">UUID 생성 (5개)</button>
+              <div class="flex gap-1">
+                <input id="randomLen" type="number" value="16" min="4" max="128" class="param-input w-16" title="길이">
+                <button onclick="transformText('generateRandom')" class="tool-btn flex-1">랜덤 문자열</button>
+              </div>
+              <button onclick="transformText('generatePassword')" class="tool-btn">강력한 비밀번호</button>
+              <button onclick="transformText('loremKo')" class="tool-btn">한글 더미 텍스트</button>
+              <button onclick="transformText('loremEn')" class="tool-btn">영문 Lorem Ipsum</button>
+              <div class="flex gap-1">
+                <input id="seqStart" type="number" value="1" class="param-input w-14" title="시작">
+                <input id="seqCount" type="number" value="10" class="param-input w-14" title="개수">
+                <button onclick="transformText('generateSeq')" class="tool-btn flex-1">연속번호</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Group H: 한국어 특화 + 개발 -->
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+            <div class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">8. 한국어 · 개발자</div>
+            <div class="btn-stack">
+              <button onclick="transformText('extractChoseong')" class="tool-btn">초성 추출</button>
+              <button onclick="transformText('decomposeHangul')" class="tool-btn">자모 분리</button>
+              <button onclick="transformText('simpleSpace')" class="tool-btn">간단 띄어쓰기 정리</button>
+              <button onclick="transformText('hanjaToHangul')" class="tool-btn">한자 → 한글 음독</button>
+              <button onclick="transformText('toCamelCase')" class="tool-btn">camelCase 변환</button>
+              <button onclick="transformText('toSnakeCase')" class="tool-btn">snake_case 변환</button>
+              <button onclick="transformText('base64Encode')" class="tool-btn">Base64 인코딩</button>
+              <button onclick="transformText('base64Decode')" class="tool-btn">Base64 디코딩</button>
+              <button onclick="transformText('generateHash')" class="tool-btn">SHA-256 해시</button>
+              <button onclick="transformText('diffChecker')" class="tool-btn-primary">A ↔ B 차이 비교</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Guide Section -->
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+      <div class="mb-5">
+        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+          <i data-lucide="book-open" class="w-6 h-6 text-indigo-600"></i>
+          기능 사용법 & 실전 예시 가이드
+        </h2>
+        <p class="text-slate-500 text-sm mt-1">항목을 클릭하면 상세 설명과 예시가 펼쳐집니다.</p>
+      </div>
+
+      <div class="space-y-2.5" id="guideList">
+        <!-- guides will be rendered by JS for cleanliness, but static is fine too. Keeping static for reliability -->
+        
+        <!-- Guide 1 -->
+        <div class="border border-slate-200 rounded-lg overflow-hidden">
+          <button onclick="toggleAccordion('g1')" class="w-full p-3.5 bg-slate-50 hover:bg-indigo-50 text-left font-semibold text-slate-800 flex justify-between items-center">
+            <span class="flex items-center gap-2"><span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs">1</span> 찾기 & 바꾸기 / 접두사·접미사</span>
+            <i id="g1-icon" data-lucide="chevron-down" class="w-5 h-5 text-slate-400"></i>
+          </button>
+          <div id="g1" class="accordion-content bg-white px-4 py-3 border-t">
+            <p class="text-sm text-slate-600 mb-2">특정 단어를 일괄 변경하거나, 모든 줄 앞/뒤에 원하는 문구를 붙일 때 사용합니다.</p>
+            <div class="bg-slate-50 p-3 rounded text-xs font-mono space-y-1">
+              <div><span class="text-red-500 font-bold">입력</span><pre class="bg-white p-2 rounded mt-1 border">사과
+바나나
+사과</pre></div>
+              <div class="text-center text-slate-400">찾기: 사과 → 바꾸기: 과일</div>
+              <div><span class="text-emerald-600 font-bold">결과</span><pre class="bg-emerald-50 p-2 rounded mt-1 border border-emerald-200">과일
+바나나
+과일</pre></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Guide 2 -->
+        <div class="border border-slate-200 rounded-lg overflow-hidden">
+          <button onclick="toggleAccordion('g2')" class="w-full p-3.5 bg-slate-50 hover:bg-indigo-50 text-left font-semibold text-slate-800 flex justify-between items-center">
+            <span class="flex items-center gap-2"><span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs">2</span> 텍스트 통계 · 고유 단어 · 숫자 추출</span>
+            <i id="g2-icon" data-lucide="chevron-down" class="w-5 h-5 text-slate-400"></i>
+          </button>
+          <div id="g2" class="accordion-content bg-white px-4 py-3 border-t">
+            <p class="text-sm text-slate-600 mb-2">글자 수, 단어 수, 예상 읽기 시간 등을 한눈에 보고, 고유 단어나 숫자만 뽑아냅니다.</p>
+          </div>
+        </div>
+
+        <!-- Guide 3 -->
+        <div class="border border-slate-200 rounded-lg overflow-hidden">
+          <button onclick="toggleAccordion('g3')" class="w-full p-3.5 bg-slate-50 hover:bg-indigo-50 text-left font-semibold text-slate-800 flex justify-between items-center">
+            <span class="flex items-center gap-2"><span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs">3</span> JSON ↔ CSV / 쿼리스트링 변환</span>
+            <i id="g3-icon" data-lucide="chevron-down" class="w-5 h-5 text-slate-400"></i>
+          </button>
+          <div id="g3" class="accordion-content bg-white px-4 py-3 border-t">
+            <p class="text-sm text-slate-600 mb-2">엑셀 데이터와 JSON, URL 파라미터를 서로 변환할 때 유용합니다.</p>
+          </div>
+        </div>
+
+        <!-- Guide 4 -->
+        <div class="border border-slate-200 rounded-lg overflow-hidden">
+          <button onclick="toggleAccordion('g4')" class="w-full p-3.5 bg-slate-50 hover:bg-indigo-50 text-left font-semibold text-slate-800 flex justify-between items-center">
+            <span class="flex items-center gap-2"><span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs">4</span> 한국어 특화 (초성 · 자모 · 한자)</span>
+            <i id="g4-icon" data-lucide="chevron-down" class="w-5 h-5 text-slate-400"></i>
+          </button>
+          <div id="g4" class="accordion-content bg-white px-4 py-3 border-t">
+            <p class="text-sm text-slate-600 mb-2">한글 초성 추출, 자모 분리, 간단한 한자 음독 변환을 지원합니다.</p>
+            <div class="bg-slate-50 p-3 rounded text-xs font-mono space-y-1">
+              <div><span class="text-red-500 font-bold">입력</span><pre class="bg-white p-2 rounded mt-1 border">안녕하세요 반갑습니다</pre></div>
+              <div class="text-center text-slate-400">↓ 초성 추출 ↓</div>
+              <div><span class="text-emerald-600 font-bold">결과</span><pre class="bg-emerald-50 p-2 rounded mt-1 border border-emerald-200">ㅇㄴㅎㅅㅇ ㅂㄱㅅㄴㄷ</pre></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Guide 5 -->
+        <div class="border border-slate-200 rounded-lg overflow-hidden">
+          <button onclick="toggleAccordion('g5')" class="w-full p-3.5 bg-slate-50 hover:bg-indigo-50 text-left font-semibold text-slate-800 flex justify-between items-center">
+            <span class="flex items-center gap-2"><span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs">5</span> 생성 도구 (UUID · 랜덤 · 더미텍스트)</span>
+            <i id="g5-icon" data-lucide="chevron-down" class="w-5 h-5 text-slate-400"></i>
+          </button>
+          <div id="g5" class="accordion-content bg-white px-4 py-3 border-t">
+            <p class="text-sm text-slate-600 mb-2">테스트용 UUID, 랜덤 문자열, 한글/영문 더미 텍스트, 연속 번호를 바로 생성합니다.</p>
+          </div>
+        </div>
+
+        <!-- Guide 6 -->
+        <div class="border border-slate-200 rounded-lg overflow-hidden">
+          <button onclick="toggleAccordion('g6')" class="w-full p-3.5 bg-slate-50 hover:bg-indigo-50 text-left font-semibold text-slate-800 flex justify-between items-center">
+            <span class="flex items-center gap-2"><span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs">6</span> 기타 유용 기능들</span>
+            <i id="g6-icon" data-lucide="chevron-down" class="w-5 h-5 text-slate-400"></i>
+          </button>
+          <div id="g6" class="accordion-content bg-white px-4 py-3 border-t">
+            <ul class="text-sm text-slate-600 space-y-1 list-disc pl-5">
+              <li>숫자 천단위 콤마 추가/제거</li>
+              <li>UNIX 타임스탬프 ↔ 날짜 변환</li>
+              <li>camelCase / snake_case 변환</li>
+              <li>Base64, SHA-256 해시</li>
+              <li>A와 B 텍스트 줄 단위 차이 비교</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bg-slate-100 border-t border-slate-200 text-center py-3 text-xs text-slate-500">
+    © 2026 올인원 텍스트 & 데이터 마법 스튜디오 v3 · 100% 로컬 처리
+  </footer>
+
+  <script>
+    // ========== Icons ==========
+    if (window.lucide) lucide.createIcons();
+
+    // ========== DOM ==========
+    const inputText = document.getElementById('inputText');
+    const outputText = document.getElementById('outputText');
+    const inputStats = document.getElementById('inputStats');
+    const outputStats = document.getElementById('outputStats');
+
+    function updateStats() {
+      const inVal = inputText.value || '';
+      const outVal = outputText.value || '';
+      inputStats.textContent = `${inVal.length.toLocaleString()}자 | ${inVal ? inVal.split('\n').length : 0}줄`;
+      outputStats.textContent = `${outVal.length.toLocaleString()}자 | ${outVal ? outVal.split('\n').length : 0}줄`;
+    }
+    inputText.addEventListener('input', updateStats);
+    outputText.addEventListener('input', updateStats);
+
+    // ========== Korean Helpers ==========
+    const CHOSEONG = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+    const JUNGSEONG = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+    const JONGSEONG = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+
+    function getChoseong(char) {
+      const code = char.charCodeAt(0);
+      if (code < 0xAC00 || code > 0xD7A3) return char;
+      return CHOSEONG[Math.floor((code - 0xAC00) / 588)];
+    }
+
+    function decomposeChar(char) {
+      const code = char.charCodeAt(0);
+      if (code < 0xAC00 || code > 0xD7A3) return char;
+      const offset = code - 0xAC00;
+      const cho = CHOSEONG[Math.floor(offset / 588)];
+      const jung = JUNGSEONG[Math.floor((offset % 588) / 28)];
+      const jong = JONGSEONG[offset % 28];
+      return cho + jung + (jong || '');
+    }
+
+    // 간단한 한자 → 한글 음독 (자주 쓰는 것만)
+    const HANJA_MAP = {
+      '人':'인','大':'대','中':'중','小':'소','日':'일','月':'월','年':'년','時':'시','分':'분','秒':'초',
+      '國':'국','韓':'한','民':'민','主':'주','義':'의','會':'회','社':'사','業':'업','學':'학','校':'교',
+      '生':'생','活':'활','家':'가','族':'족','父':'부','母':'모','子':'자','女':'녀','男':'남','親':'친',
+      '愛':'애','情':'정','心':'심','思':'사','考':'고','知':'지','識':'식','文':'문','化':'화','史':'사',
+      '地':'지','水':'수','火':'화','風':'풍','天':'천','空':'공','山':'산','川':'천','海':'해','島':'도',
+      '東':'동','西':'서','南':'남','北':'북','前':'전','後':'후','左':'좌','右':'우','上':'상','下':'하',
+      '一':'일','二':'이','三':'삼','四':'사','五':'오','六':'육','七':'칠','八':'팔','九':'구','十':'십',
+      '百':'백','千':'천','萬':'만','億':'억','金':'금','銀':'은','銅':'동','鐵':'철','石':'석','木':'목',
+      '車':'차','電':'전','話':'화','通':'통','信':'신','報':'보','告':'고','記':'기','錄':'록','書':'서',
+      '讀':'독','寫':'사','言':'언','語':'어','話':'화','談':'담','論':'론','議':'의','決':'결','定':'정'
+    };
+
+    // ========== Main Transform ==========
+    async function transformText(type) {
+      const val = inputText.value || '';
+      let res = '';
+
+      try {
+        switch (type) {
+          // ----- 기본 정제 -----
+          case 'removeNewlines':
+            res = val.replace(/\r?\n|\r/g, ' ');
+            break;
+          case 'removeEmptyLines':
+            res = val.split(/\r?\n/).filter(l => l.trim() !== '').join('\n');
+            break;
+          case 'trimSpaces':
+            res = val.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim();
+            break;
+          case 'removeSpecialChars':
+            res = val.replace(/[^a-zA-Z0-9가-힣\s]/g, '');
+            break;
+          case 'stripHtml':
+            res = val.replace(/<[^>]*>?/gm, '');
+            break;
+
+          // ----- 찾기/바꾸기 -----
+          case 'findReplace': {
+            const find = document.getElementById('findText').value;
+            const replace = document.getElementById('replaceText').value;
+            const useRegex = document.getElementById('findRegex').checked;
+            if (!find) { res = '찾을 내용을 입력해주세요.'; break; }
+            if (useRegex) {
+              const re = new RegExp(find, 'g');
+              res = val.replace(re, replace);
+            } else {
+              res = val.split(find).join(replace);
+            }
+            break;
+          }
+          case 'addPrefixSuffix': {
+            const prefix = document.getElementById('prefixText').value || '';
+            const suffix = document.getElementById('suffixText').value || '';
+            res = val.split(/\r?\n/).map(l => prefix + l + suffix).join('\n');
+            break;
+          }
+
+          // ----- 정렬/구조 -----
+          case 'sortAsc':
+            res = val.split(/\r?\n/).sort((a,b) => a.localeCompare(b, 'ko')).join('\n');
+            break;
+          case 'sortDesc':
+            res = val.split(/\r?\n/).sort((a,b) => b.localeCompare(a, 'ko')).join('\n');
+            break;
+          case 'removeDuplicates':
+            res = [...new Set(val.split(/\r?\n/))].join('\n');
+            break;
+          case 'reverseLines':
+            res = val.split(/\r?\n/).reverse().join('\n');
+            break;
+          case 'addLineNumbers':
+            res = val.split(/\r?\n/).map((l,i) => `${i+1}. ${l}`).join('\n');
+            break;
+          case 'reverseChars':
+            res = val.split('').reverse().join('');
+            break;
+
+          // ----- 추출/통계 -----
+          case 'textStats': {
+            const chars = val.length;
+            const charsNoSpace = val.replace(/\s/g, '').length;
+            const lines = val ? val.split(/\r?\n/).length : 0;
+            const words = val.trim() ? val.trim().split(/\s+/).length : 0;
+            const sentences = (val.match(/[.!?。！？]+/g) || []).length || (val.trim() ? 1 : 0);
+            const readingMin = Math.max(1, Math.ceil(words / 200));
+            res = `[텍스트 통계 분석 결과]
+• 전체 글자 수: ${chars.toLocaleString()}자
+• 공백 제외 글자 수: ${charsNoSpace.toLocaleString()}자
+• 단어 수: ${words.toLocaleString()}개
+• 줄 수: ${lines.toLocaleString()}줄
+• 문장 수(대략): ${sentences.toLocaleString()}개
+• 예상 읽기 시간: 약 ${readingMin}분 (분당 200단어 기준)`;
+            break;
+          }
+          case 'uniqueWords': {
+            const words = val.trim().split(/\s+/).filter(Boolean);
+            const unique = [...new Set(words)];
+            res = `고유 단어 ${unique.length}개:\n\n` + unique.join('\n');
+            break;
+          }
+          case 'extractNumbers': {
+            const nums = val.match(/-?\d+(\.\d+)?/g) || [];
+            if (!nums.length) { res = '숫자를 찾을 수 없습니다.'; break; }
+            const sum = nums.reduce((a,b) => a + parseFloat(b), 0);
+            res = `추출된 숫자 (${nums.length}개):\n${nums.join('\n')}\n\n합계: ${sum}`;
+            break;
+          }
+          case 'extractEmails': {
+            const m = val.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
+            res = m ? [...new Set(m)].join('\n') : '이메일 주소를 찾을 수 없습니다.';
+            break;
+          }
+          case 'extractPhones': {
+            const m = val.match(/(?:\d{2,3}[-.\s]?)?\d{3,4}[-.\s]?\d{4}/g);
+            res = m ? [...new Set(m)].join('\n') : '전화번호를 찾을 수 없습니다.';
+            break;
+          }
+          case 'extractUrls': {
+            const m = val.match(/https?:\/\/[^\s<>"{}|\\^`[\]]+/g);
+            res = m ? [...new Set(m)].join('\n') : 'URL을 찾을 수 없습니다.';
+            break;
+          }
+
+          // ----- 데이터 변환 -----
+          case 'jsonBeautify':
+            res = JSON.stringify(JSON.parse(val), null, 2);
+            break;
+          case 'jsonMinify':
+            res = JSON.stringify(JSON.parse(val));
+            break;
+          case 'csvToJson': {
+            const lines = val.trim().split(/\r?\n/);
+            if (lines.length < 2) { res = '헤더 + 데이터 최소 2줄 필요합니다.'; break; }
+            const delim = lines[0].includes('\t') ? '\t' : ',';
+            const headers = lines[0].split(delim).map(h => h.trim());
+            const arr = lines.slice(1).map(line => {
+              const vals = line.split(delim).map(v => v.trim());
+              const obj = {};
+              headers.forEach((h,i) => obj[h] = vals[i] ?? '');
+              return obj;
+            });
+            res = JSON.stringify(arr, null, 2);
+            break;
+          }
+          case 'jsonToCsv': {
+            const data = JSON.parse(val);
+            const arr = Array.isArray(data) ? data : [data];
+            if (!arr.length) { res = '데이터가 없습니다.'; break; }
+            const headers = Object.keys(arr[0]);
+            const rows = arr.map(obj => headers.map(h => {
+              const v = obj[h] ?? '';
+              return typeof v === 'string' && (v.includes(',') || v.includes('"')) ? `"${v.replace(/"/g,'""')}"` : v;
+            }).join(','));
+            res = [headers.join(','), ...rows].join('\n');
+            break;
+          }
+          case 'queryToJson': {
+            const params = new URLSearchParams(val.replace(/^\?/, ''));
+            const obj = {};
+            for (const [k,v] of params) obj[k] = v;
+            res = JSON.stringify(obj, null, 2);
+            break;
+          }
+          case 'jsonToQuery': {
+            const obj = JSON.parse(val);
+            const params = new URLSearchParams();
+            for (const [k,v] of Object.entries(obj)) params.append(k, v);
+            res = params.toString();
+            break;
+          }
+
+          // ----- 숫자/날짜/인코딩 -----
+          case 'addComma':
+            res = val.replace(/\b(\d+)\b/g, (m) => Number(m).toLocaleString('en-US'));
+            break;
+          case 'removeComma':
+            res = val.replace(/(\d),(?=\d)/g, '$1');
+            break;
+          case 'timestampToDate': {
+            const ts = parseInt(val.trim(), 10);
+            if (isNaN(ts)) { res = '올바른 UNIX 타임스탬프가 아닙니다.'; break; }
+            // 초/밀리초 자동 판별
+            const date = new Date(ts > 1e12 ? ts : ts * 1000);
+            res = date.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) + '\nISO: ' + date.toISOString();
+            break;
+          }
+          case 'dateToTimestamp': {
+            const d = new Date(val.trim());
+            if (isNaN(d.getTime())) { res = '올바른 날짜 형식이 아닙니다. (예: 2026-11-12 또는 2026-11-12T15:00:00)'; break; }
+            res = `초 단위: ${Math.floor(d.getTime()/1000)}\n밀리초: ${d.getTime()}`;
+            break;
+          }
+          case 'urlEncode':
+            res = encodeURIComponent(val);
+            break;
+          case 'urlDecode':
+            res = decodeURIComponent(val);
+            break;
+
+          // ----- 생성 -----
+          case 'generateUUID': {
+            const uuids = [];
+            for (let i=0; i<5; i++) {
+              if (crypto.randomUUID) uuids.push(crypto.randomUUID());
+              else uuids.push('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                const r = Math.random()*16|0;
+                return (c==='x'?r:(r&0x3|0x8)).toString(16);
+              }));
+            }
+            res = uuids.join('\n');
+            break;
+          }
+          case 'generateRandom': {
+            const len = parseInt(document.getElementById('randomLen').value) || 16;
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let s = '';
+            for (let i=0; i<len; i++) s += chars.charAt(Math.floor(Math.random()*chars.length));
+            res = s;
+            break;
+          }
+          case 'generatePassword': {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=';
+            let s = '';
+            for (let i=0; i<16; i++) s += chars.charAt(Math.floor(Math.random()*chars.length));
+            res = s;
+            break;
+          }
+          case 'loremKo':
+            res = `대한민국은 민주공화국이다. 대한민국의 주권은 국민에게 있고, 모든 권력은 국민으로부터 나온다.
+모든 국민은 인간으로서의 존엄과 가치를 가지며, 행복을 추구할 권리를 가진다. 국가는 개인이 가지는 불가침의 기본적 인권을 확인하고 이를 보장할 의무를 진다.
+모든 국민은 법 앞에 평등하다. 누구든지 성별·종교 또는 사회적 신분에 의하여 정치적·경제적·사회적·문화적 생활의 모든 영역에 있어서 차별을 받지 아니한다.
+모든 국민은 직업선택의 자유를 가진다. 모든 국민은 주거의 자유를 침해받지 아니한다.
+언론·출판에 대한 허가나 검열과 집회·결사에 대한 허가는 인정되지 아니한다.`;
+            break;
+          case 'loremEn':
+            res = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+Curabitur pretium tincidunt lacus. Nulla gravida orci a odio. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris.`;
+            break;
+          case 'generateSeq': {
+            const start = parseInt(document.getElementById('seqStart').value) || 1;
+            const count = parseInt(document.getElementById('seqCount').value) || 10;
+            const arr = [];
+            for (let i=0; i<count; i++) arr.push(String(start + i).padStart(3, '0'));
+            res = arr.join('\n');
+            break;
+          }
+
+          // ----- 한국어 특화 -----
+          case 'extractChoseong':
+            res = [...val].map(ch => getChoseong(ch)).join('');
+            break;
+          case 'decomposeHangul':
+            res = [...val].map(ch => decomposeChar(ch)).join(' ');
+            break;
+          case 'simpleSpace':
+            // 매우 단순한 규칙 기반 띄어쓰기 정리 (완벽하지 않음)
+            res = val
+              .replace(/([가-힣])([a-zA-Z0-9])/g, '$1 $2')
+              .replace(/([a-zA-Z0-9])([가-힣])/g, '$1 $2')
+              .replace(/([.?!。])([가-힣a-zA-Z])/g, '$1 $2')
+              .replace(/\s{2,}/g, ' ')
+              .trim();
+            break;
+          case 'hanjaToHangul':
+            res = [...val].map(ch => HANJA_MAP[ch] || ch).join('');
+            break;
+
+          // ----- 개발자 -----
+          case 'toCamelCase':
+            res = val.toLowerCase()
+              .replace(/[^a-zA-Z0-9]+(.)/g, (_, c) => c.toUpperCase())
+              .replace(/^[A-Z]/, c => c.toLowerCase());
+            break;
+          case 'toSnakeCase':
+            res = val
+              .replace(/([a-z])([A-Z])/g, '$1_$2')
+              .replace(/[\s\-]+/g, '_')
+              .toLowerCase();
+            break;
+          case 'base64Encode':
+            res = btoa(unescape(encodeURIComponent(val)));
+            break;
+          case 'base64Decode':
+            res = decodeURIComponent(escape(atob(val)));
+            break;
+          case 'generateHash': {
+            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(val));
+            res = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+            break;
+          }
+          case 'diffChecker': {
+            const linesA = val.split(/\r?\n/);
+            const linesB = (outputText.value || '').split(/\r?\n/);
+            const max = Math.max(linesA.length, linesB.length);
+            let diff = 0;
+            let out = '=== A(입력) ↔ B(출력) 줄 단위 비교 ===\n\n';
+            for (let i=0; i<max; i++) {
+              const a = linesA[i] ?? '[없음]';
+              const b = linesB[i] ?? '[없음]';
+              if (a !== b) {
+                diff++;
+                out += `[${i+1}번째 줄]\nA: ${a}\nB: ${b}\n\n`;
+              }
+            }
+            res = diff === 0 ? '두 텍스트가 완전히 동일합니다.' : `총 ${diff}개 줄에서 차이 발견\n\n` + out;
+            break;
+          }
+
+          default:
+            res = '알 수 없는 기능입니다.';
+        }
+      } catch (e) {
+        res = '오류 발생: ' + e.message;
+      }
+
+      outputText.value = res;
+      updateStats();
+    }
+
+    // ========== Clear / Copy ==========
+    document.getElementById('clearBtn').onclick = () => {
+      inputText.value = '';
+      outputText.value = '';
+      updateStats();
+    };
+
+    document.getElementById('copyBtn').onclick = () => {
+      if (!outputText.value) return;
+      navigator.clipboard.writeText(outputText.value).then(() => {
+        alert('결과가 클립보드에 복사되었습니다!');
+      }).catch(() => {
+        outputText.select();
+        document.execCommand('copy');
+        alert('결과가 클립보드에 복사되었습니다!');
+      });
+    };
+
+    // ========== Accordion ==========
+    function toggleAccordion(id) {
+      const content = document.getElementById(id);
+      const icon = document.getElementById(id + '-icon');
+      const isOpen = content.classList.contains('open');
+
+      document.querySelectorAll('.accordion-content').forEach(el => el.classList.remove('open'));
+      document.querySelectorAll('[id$="-icon"]').forEach(el => el.style.transform = 'rotate(0deg)');
+
+      if (!isOpen) {
+        content.classList.add('open');
+        if (icon) icon.style.transform = 'rotate(180deg)';
+      }
+    }
+
+    updateStats();
+  </script>
+<script src="../js/protection.js"></script>
+</body>
+</html>

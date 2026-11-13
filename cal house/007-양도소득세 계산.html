@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스마트 부동산 양도소득세 및 부대비용 계산기</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Noto Sans KR -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        /* 필수 입력 항목 시각적 강조 테두리 및 글로우 효과 */
+        .essential-input-box {
+            border: 2px solid #ef4444;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.15);
+            transition: all 0.2s ease-in-out;
+        }
+        .essential-input-box:focus-within {
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.35);
+            border-color: #dc2626;
+        }
+        .tooltip {
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .has-tooltip:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Header Navigation -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-md">
+                    <i class="fa-solid fa-calculator"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black text-gray-900 tracking-tight">부동산 양도소득세 및 부대비용 계산기</h1>
+                    <p class="text-xs text-gray-500">실시간 정확한 세액 산출 및 1세대 1주택 비과세·장특공제 자동계산</p>
+                </div>
+            </div>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-200">
+                <i class="fa-solid fa-star text-red-500 mr-1.5"></i> 필수입력항목 빨간색 강조
+            </span>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full">
+        
+        <!-- Essential Banner Info -->
+        <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mb-8 shadow-sm flex items-start space-x-3">
+            <i class="fa-solid fa-lightbulb text-amber-500 text-xl mt-0.5"></i>
+            <div class="text-sm text-amber-900">
+                <strong class="font-bold text-amber-950">세무 지식이 없어도 쉽게 계산하세요!</strong><br/>
+                테두리가 <span class="bg-red-500 text-white px-2 py-0.5 rounded-md font-bold text-xs">빨간색 필수</span>로 표시된 항목(양도가액, 취득가액, 날짜)만 입력하시면 양도소득세와 실수령액이 즉시 자동 계산됩니다.
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Left Form Area (Input Section) -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- Card 1: 매매 및 금액 정보 (Essential Core Inputs) -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-6">
+                    <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+                        <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                            <i class="fa-solid fa-coins text-blue-600"></i> 1. 거래 금액 정보 (필수)
+                        </h2>
+                        <span class="text-xs bg-red-600 text-white font-bold px-2.5 py-1 rounded-full">필수 작성 구간</span>
+                    </div>
+
+                    <!-- 1. 양도가액 (판매 금액) -->
+                    <div class="essential-input-box p-4 rounded-xl relative">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block font-black text-red-700 text-base flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-red-600"></span>
+                                양도가액 (팔 때 가격)
+                            </label>
+                            <span class="text-xs bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded">필수</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-2">실제 부동산을 매도(판매)한 금액을 입력하세요.</p>
+                        <div class="relative flex items-center">
+                            <input type="text" id="sellPrice" value="1,000,000,000" placeholder="예: 1,000,000,000" oninput="handleCurrencyInput(this)" 
+                                   class="w-full text-right text-xl font-black text-gray-900 pr-12 pl-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:outline-none">
+                            <span class="absolute right-4 font-bold text-gray-700 text-base">원</span>
+                        </div>
+                        <div id="sellPriceKorean" class="text-right text-xs text-blue-600 font-semibold mt-1 h-4">10억 원</div>
+                    </div>
+
+                    <!-- 2. 취득가액 (살 때 가격) -->
+                    <div class="essential-input-box p-4 rounded-xl relative">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block font-black text-red-700 text-base flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-red-600"></span>
+                                취득가액 (살 때 가격)
+                            </label>
+                            <span class="text-xs bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded">필수</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-2">과거 매수 당시 매매계약서상의 실제 구매 금액입니다.</p>
+                        <div class="relative flex items-center">
+                            <input type="text" id="buyPrice" value="600,000,000" placeholder="예: 600,000,000" oninput="handleCurrencyInput(this)" 
+                                   class="w-full text-right text-xl font-black text-gray-900 pr-12 pl-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:outline-none">
+                            <span class="absolute right-4 font-bold text-gray-700 text-base">원</span>
+                        </div>
+                        <div id="buyPriceKorean" class="text-right text-xs text-blue-600 font-semibold mt-1 h-4">6억 원</div>
+                    </div>
+
+                    <!-- 3. 필요경비 -->
+                    <div class="border-2 border-dashed border-gray-300 bg-gray-50 p-4 rounded-xl">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="font-bold text-gray-800 text-sm flex items-center gap-1.5">
+                                필요경비 (취득세, 중개수수료, 리모델링 등)
+                                <span class="has-tooltip relative cursor-pointer text-gray-400 hover:text-gray-600">
+                                    <i class="fa-solid fa-circle-question"></i>
+                                    <div class="tooltip absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl z-20">
+                                        취득세, 법무사비, 부동산 중개수수료, 섀시 및 베란다 확장 등 자본적 지출액 증빙 가능 금액의 합계입니다.
+                                    </div>
+                                </span>
+                            </label>
+                            <span class="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded">경비공제</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-2">입력시 양도차익이 줄어들어 세금이 감소합니다.</p>
+                        <div class="relative flex items-center">
+                            <input type="text" id="expenses" value="20,000,000" placeholder="예: 25,000,000" oninput="handleCurrencyInput(this)" 
+                                   class="w-full text-right text-lg font-bold text-gray-900 pr-12 pl-4 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <span class="absolute right-4 font-bold text-gray-700">원</span>
+                        </div>
+                        <div id="expensesKorean" class="text-right text-xs text-gray-500 font-medium mt-1 h-4">2,000만 원</div>
+                    </div>
+                </div>
+
+                <!-- Card 2: 보유 및 거주 기간 (Essential Date Inputs) -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-5">
+                    <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+                        <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                            <i class="fa-regular fa-calendar-days text-blue-600"></i> 2. 보유 및 거주 기간 (필수)
+                        </h2>
+                        <span class="text-xs bg-red-600 text-white font-bold px-2.5 py-1 rounded-full">장기보유공제 계산</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- 취득일자 -->
+                        <div class="essential-input-box p-3.5 rounded-xl">
+                            <label class="block font-black text-red-700 text-sm mb-1 flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-red-600"></span> 취득일자 (살 때)
+                            </label>
+                            <input type="date" id="buyDate" onchange="calculateTax()" class="w-full font-bold text-gray-900 bg-gray-50 border border-gray-300 rounded-lg p-2 focus:bg-white focus:outline-none">
+                        </div>
+                        <!-- 양도일자 -->
+                        <div class="essential-input-box p-3.5 rounded-xl">
+                            <label class="block font-black text-red-700 text-sm mb-1 flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-red-600"></span> 양도일자 (팔 때)
+                            </label>
+                            <input type="date" id="sellDate" onchange="calculateTax()" class="w-full font-bold text-gray-900 bg-gray-50 border border-gray-300 rounded-lg p-2 focus:bg-white focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- 계산된 보유기간 표시 -->
+                    <div id="holdingPeriodBadge" class="bg-blue-50 border border-blue-200 text-blue-900 text-xs px-3 py-2 rounded-lg font-bold flex justify-between items-center">
+                        <span><i class="fa-solid fa-clock text-blue-500 mr-1"></i> 산출된 보유기간:</span>
+                        <span id="holdingPeriodText" class="text-blue-700 font-extrabold text-sm">0년 0개월</span>
+                    </div>
+
+                    <!-- 실거주 기간 -->
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="font-bold text-gray-800 text-sm flex items-center gap-1.5">
+                                실제 거주 기간 (년 단위)
+                                <span class="has-tooltip relative cursor-pointer text-gray-400 hover:text-gray-600">
+                                    <i class="fa-solid fa-circle-question"></i>
+                                    <div class="tooltip absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl z-20">
+                                        1세대 1주택자의 경우 거주기간에 따라 연 4%씩(최대 40%) 추가 공제를 받을 수 있습니다.
+                                    </div>
+                                </span>
+                            </label>
+                            <span class="text-xs text-blue-600 font-bold">1주택 우대 혜택</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <input type="number" id="residenceYears" min="0" max="50" value="3" oninput="calculateTax()" 
+                                   class="w-full text-right font-bold text-gray-900 p-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <span class="font-bold text-gray-700">년</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: 주택 수 및 세무 조건 -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-5">
+                    <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+                        <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                            <i class="fa-solid fa-house-user text-blue-600"></i> 3. 주택 조건 & 비과세 여부 (필수)
+                        </h2>
+                    </div>
+
+                    <!-- 주택 보유 수 -->
+                    <div>
+                        <label class="block font-black text-red-700 text-sm mb-2">세대 기준 보유 주택 수</label>
+                        <div class="grid grid-cols-3 gap-3">
+                            <label class="cursor-pointer border-2 border-red-400 bg-red-50 hover:bg-red-100 rounded-xl p-3 text-center transition-all has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                                <input type="radio" name="houseCount" value="1" checked onchange="calculateTax()" class="hidden">
+                                <span class="block text-xs text-gray-500 font-semibold mb-1">혜택 대상</span>
+                                <span class="block font-black text-gray-900 text-sm">1세대 1주택</span>
+                            </label>
+                            <label class="cursor-pointer border border-gray-200 hover:bg-gray-50 rounded-xl p-3 text-center transition-all has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                                <input type="radio" name="houseCount" value="2" onchange="calculateTax()" class="hidden">
+                                <span class="block text-xs text-gray-500 font-semibold mb-1">일반 과세</span>
+                                <span class="block font-black text-gray-900 text-sm">2주택자</span>
+                            </label>
+                            <label class="cursor-pointer border border-gray-200 hover:bg-gray-50 rounded-xl p-3 text-center transition-all has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                                <input type="radio" name="houseCount" value="3" onchange="calculateTax()" class="hidden">
+                                <span class="block text-xs text-gray-500 font-semibold mb-1">다주택자</span>
+                                <span class="block font-black text-gray-900 text-sm">3주택 이상</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 조정대상지역 여부 -->
+                    <div class="flex items-center justify-between p-3.5 bg-gray-50 rounded-xl border border-gray-200">
+                        <div>
+                            <span class="block font-bold text-gray-800 text-sm">조정대상지역 주택 여부</span>
+                            <span class="text-xs text-gray-500">양도 당시 조정대상지역에 위치한 주택입니까?</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="isAdjustedArea" onchange="calculateTax()" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+
+                    <!-- 공동명의 및 지분율 -->
+                    <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label class="font-bold text-gray-800 text-sm">부부 공동명의 여부</label>
+                            <input type="checkbox" id="isJointOwnership" onchange="toggleJointInputs(); calculateTax();" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
+                        </div>
+                        <div id="jointShareContainer" class="hidden flex items-center justify-between pt-2 border-t border-gray-200">
+                            <span class="text-xs font-semibold text-gray-600">본인 지분율:</span>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" id="jointShare" min="1" max="99" value="50" oninput="calculateTax()" 
+                                       class="w-20 text-right font-bold text-gray-900 p-1.5 bg-white border border-gray-300 rounded-lg text-sm">
+                                <span class="font-bold text-gray-700 text-sm">%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Right Results Area (Summary & Step-by-Step Breakdown) -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <!-- Main Summary Card -->
+                <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-6 text-white shadow-xl sticky top-24">
+                    <div class="flex items-center justify-between mb-4 border-b border-slate-700 pb-3">
+                        <span class="text-xs font-bold text-blue-400 uppercase tracking-wider">최종 예상 세액 요약</span>
+                        <span id="taxStatusBadge" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs px-2.5 py-0.5 rounded-full font-bold">비과세 적용 가능</span>
+                    </div>
+
+                    <!-- 총 납부 세액 (양도소득세 + 지방소득세) -->
+                    <div class="my-6 text-center">
+                        <span class="text-xs text-gray-400 font-medium block mb-1">총 예상 납부 세액 (지방소득세 포함)</span>
+                        <div class="text-4xl font-black text-amber-400 tracking-tight" id="totalTaxDisplay">0 원</div>
+                    </div>
+
+                    <div class="space-y-3 pt-4 border-t border-slate-700/80 text-sm">
+                        <div class="flex justify-between items-center text-gray-300">
+                            <span>양도소득세 (국세)</span>
+                            <span class="font-bold text-white" id="mainTaxDisplay">0 원</span>
+                        </div>
+                        <div class="flex justify-between items-center text-gray-300">
+                            <span>지방소득세 (10%)</span>
+                            <span class="font-bold text-white" id="localTaxDisplay">0 원</span>
+                        </div>
+                        <div class="flex justify-between items-center text-gray-300 pt-2 border-t border-slate-700/50">
+                            <span class="text-emerald-400 font-bold">순 양도차익 (매매이익)</span>
+                            <span class="font-bold text-emerald-400" id="netCapitalGainDisplay">0 원</span>
+                        </div>
+                        <div class="flex justify-between items-center text-gray-300">
+                            <span class="text-blue-300 font-bold">세후 최종 실수령액</span>
+                            <span class="font-extrabold text-blue-300 text-base" id="finalNetProfitDisplay">0 원</span>
+                        </div>
+                    </div>
+
+                    <button onclick="scrollToDetails()" class="w-full mt-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg transition duration-200 flex items-center justify-center gap-2">
+                        <span>상세 계산 내역 확인</span>
+                        <i class="fa-solid fa-arrow-down"></i>
+                    </button>
+                </div>
+
+                <!-- Detailed Breakdown Box -->
+                <div id="detailsSection" class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-4">
+                    <h3 class="text-base font-bold text-gray-900 flex items-center gap-2 border-b border-gray-100 pb-3">
+                        <i class="fa-solid fa-list-check text-blue-600"></i> 세부 단계별 산출 과정
+                    </h3>
+
+                    <div class="space-y-3 text-xs md:text-sm">
+                        <!-- Step 1 -->
+                        <div class="flex justify-between py-2 border-b border-gray-100">
+                            <span class="text-gray-600">① 전체 양도차익</span>
+                            <span class="font-bold text-gray-900" id="step1Gain">0 원</span>
+                        </div>
+                        <!-- Step 2 -->
+                        <div class="flex justify-between py-2 border-b border-gray-100">
+                            <span class="text-gray-600">② 과세대상 양도차익 (12억 초과분)</span>
+                            <span class="font-bold text-gray-900" id="step2TaxableGain">0 원</span>
+                        </div>
+                        <!-- Step 3 -->
+                        <div class="flex justify-between py-2 border-b border-gray-100">
+                            <span class="text-gray-600">
+                                ③ 장기보유특별공제 
+                                <span id="longTermRateText" class="text-blue-600 font-bold">(0%)</span>
+                            </span>
+                            <span class="font-bold text-red-600" id="step3LongTermDeduction">- 0 원</span>
+                        </div>
+                        <!-- Step 4 -->
+                        <div class="flex justify-between py-2 border-b border-gray-100">
+                            <span class="text-gray-600">④ 양도소득금액</span>
+                            <span class="font-bold text-gray-900" id="step4IncomeAmount">0 원</span>
+                        </div>
+                        <!-- Step 5 -->
+                        <div class="flex justify-between py-2 border-b border-gray-100">
+                            <span class="text-gray-600">⑤ 양도소득 기본공제 (인당 250만)</span>
+                            <span class="font-bold text-red-600" id="step5BasicDeduction">- 0 원</span>
+                        </div>
+                        <!-- Step 6 -->
+                        <div class="flex justify-between py-2 border-b border-gray-100 bg-blue-50/50 p-2 rounded">
+                            <span class="font-bold text-blue-900">⑥ 과세표준</span>
+                            <span class="font-extrabold text-blue-900" id="step6TaxBase">0 원</span>
+                        </div>
+                        <!-- Step 7 -->
+                        <div class="flex justify-between py-2 border-b border-gray-100">
+                            <span class="text-gray-600">⑦ 적용 세율 (누진공제)</span>
+                            <span class="font-bold text-gray-900" id="step7TaxRate">0% (0원)</span>
+                        </div>
+                        <!-- Step 8 -->
+                        <div class="flex justify-between py-2">
+                            <span class="font-bold text-gray-800">⑧ 산출세액</span>
+                            <span class="font-black text-gray-900" id="step8CalculatedTax">0 원</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expense Note Card -->
+                <div class="bg-slate-100 rounded-xl p-4 text-xs text-gray-600 space-y-2">
+                    <p class="font-bold text-gray-800"><i class="fa-solid fa-triangle-exclamation text-amber-500 mr-1"></i> 꼭 참고하세요!</p>
+                    <p>본 계산기는 세법 기준 세율을 바탕으로 실시간 추정된 금액을 제공합니다. 상속, 증여, 일시적 2주택 등 개별 조건에 따라 차이가 있을 수 있으므로 실제 신고 전 세무 전문가와 상담하세요.</p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 py-6 mt-12 text-center text-xs text-gray-500">
+        <div class="max-w-6xl mx-auto px-4">
+            <p>© 2026 부동산 양도소득세 및 부대비용 계산기. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Engine -->
+    <script>
+        // 초기 로딩 시 기본 날짜 및 계산 세팅 (4년 전 취득 ~ 오늘 양도)
+        window.onload = function() {
+            const today = new Date();
+            const fourYearsAgo = new Date(today.getFullYear() - 4, today.getMonth(), today.getDate());
+            
+            document.getElementById('sellDate').value = formatDate(today);
+            document.getElementById('buyDate').value = formatDate(fourYearsAgo);
+            
+            calculateTax();
+        };
+
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // 통화 입력 포맷팅 및 한글 단위 표시
+        function handleCurrencyInput(input) {
+            let val = input.value.replace(/[^0-9]/g, '');
+            if (val) {
+                input.value = Number(val).toLocaleString();
+            } else {
+                input.value = '';
+            }
+
+            const koreanTarget = document.getElementById(input.id + 'Korean');
+            if (koreanTarget) {
+                const num = parseInt(val, 10);
+                if (!isNaN(num) && num > 0) {
+                    koreanTarget.innerText = numberToKorean(num) + ' 원';
+                } else {
+                    koreanTarget.innerText = '0 원';
+                }
+            }
+            calculateTax();
+        }
+
+        function getNumber(id) {
+            const val = document.getElementById(id).value.replace(/[^0-9]/g, '');
+            return val ? parseInt(val, 10) : 0;
+        }
+
+        // 숫자를 억/만 단위 한글 표기로 변환
+        function numberToKorean(number) {
+            if (number === 0) return '0';
+            const unitWords = ['', '만', '억', '조'];
+            let parts = [];
+            let myIndex = 0;
+
+            while (number > 0) {
+                let mod = number % 10000;
+                if (mod > 0) {
+                    parts.unshift(mod.toLocaleString() + unitWords[myIndex]);
+                }
+                number = Math.floor(number / 10000);
+                myIndex++;
+            }
+            return parts.join(' ');
+        }
+
+        function toggleJointInputs() {
+            const isJoint = document.getElementById('isJointOwnership').checked;
+            const container = document.getElementById('jointShareContainer');
+            if (isJoint) {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
+        function scrollToDetails() {
+            document.getElementById('detailsSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 보유 기간 계산
+        function calculatePeriod() {
+            const bVal = document.getElementById('buyDate').value;
+            const sVal = document.getElementById('sellDate').value;
+
+            if (!bVal || !sVal) return { years: 0, months: 0, totalDays: 0, valid: false };
+
+            const bDate = new Date(bVal);
+            const sDate = new Date(sVal);
+
+            if (isNaN(bDate) || isNaN(sDate) || sDate < bDate) {
+                return { years: 0, months: 0, totalDays: 0, valid: false };
+            }
+
+            let years = sDate.getFullYear() - bDate.getFullYear();
+            let months = sDate.getMonth() - bDate.getMonth();
+            let days = sDate.getDate() - bDate.getDate();
+
+            if (days < 0) {
+                months -= 1;
+            }
+            if (months < 0) {
+                years -= 1;
+                months += 12;
+            }
+
+            const diffTime = Math.abs(sDate - bDate);
+            const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            return { years, months, totalDays, valid: true };
+        }
+
+        // 실시간 양도세 및 부대비용 계산 엔진
+        function calculateTax() {
+            const sellPrice = getNumber('sellPrice');
+            const buyPrice = getNumber('buyPrice');
+            const expenses = getNumber('expenses');
+            
+            const houseCount = document.querySelector('input[name="houseCount"]:checked').value;
+            const isJoint = document.getElementById('isJointOwnership').checked;
+            const jointShare = isJoint ? (parseFloat(document.getElementById('jointShare').value) || 50) / 100 : 1.0;
+            const resYears = parseInt(document.getElementById('residenceYears').value, 10) || 0;
+
+            const period = calculatePeriod();
+            const periodBadge = document.getElementById('holdingPeriodBadge');
+            const periodText = document.getElementById('holdingPeriodText');
+
+            if (!period.valid) {
+                periodText.innerText = "날짜 오류 (양도일이 취득일보다 빠름)";
+                periodBadge.className = "bg-red-50 border border-red-200 text-red-900 text-xs px-3 py-2 rounded-lg font-bold flex justify-between items-center";
+                return;
+            } else {
+                periodText.innerText = `${period.years}년 ${period.months}개월 (${period.totalDays}일)`;
+                periodBadge.className = "bg-blue-50 border border-blue-200 text-blue-900 text-xs px-3 py-2 rounded-lg font-bold flex justify-between items-center";
+            }
+
+            // Step 1: 전체 양도차익
+            const totalGain = Math.max(0, sellPrice - buyPrice - expenses);
+
+            // Step 2: 1세대 1주택 비과세 판단 및 과세대상 양도차익
+            let isNonTaxable = false;
+            let taxableGain = totalGain;
+
+            if (houseCount === '1') {
+                if (sellPrice <= 1200000000 && period.years >= 2) {
+                    isNonTaxable = true;
+                    taxableGain = 0;
+                } else if (sellPrice > 1200000000 && period.years >= 2) {
+                    taxableGain = totalGain * ((sellPrice - 1200000000) / sellPrice);
+                }
+            }
+
+            // 지분율 반영
+            let shareTaxableGain = taxableGain * jointShare;
+
+            // Step 3: 장기보유특별공제
+            let longTermDeductionRate = 0;
+            if (period.years >= 3) {
+                if (houseCount === '1' && period.years >= 2) {
+                    let holdingRate = Math.min(40, period.years * 4);
+                    let residenceRate = Math.min(40, resYears * 4);
+                    longTermDeductionRate = (holdingRate + residenceRate) / 100;
+                } else {
+                    longTermDeductionRate = Math.min(0.30, period.years * 0.02);
+                }
+            }
+
+            const longTermDeductionAmount = shareTaxableGain * longTermDeductionRate;
+            
+            // Step 4: 양도소득금액
+            const incomeAmount = shareTaxableGain - longTermDeductionAmount;
+
+            // Step 5: 기본공제 (인당 2,500,000원)
+            const basicDeduction = (incomeAmount > 0) ? Math.min(incomeAmount, 2500000) : 0;
+
+            // Step 6: 과세표준
+            const taxBase = Math.max(0, incomeAmount - basicDeduction);
+
+            // Step 7: 세율 및 누진공제
+            const taxBracket = getTaxRate(taxBase);
+            const calculatedTaxPerson = Math.max(0, (taxBase * taxBracket.rate) - taxBracket.deduction);
+
+            // 공동명의 인원 반영 총 세액
+            const mainTax = isJoint ? Math.round(calculatedTaxPerson * (1 / jointShare)) : Math.round(calculatedTaxPerson);
+            const localTax = Math.floor(mainTax * 0.1);
+            const totalTax = mainTax + localTax;
+
+            // 최종 실수령액 계산 (양도가액 - 필요경비 - 총납부세액)
+            const finalNetProfit = sellPrice - expenses - totalTax;
+
+            // UI 렌더링 반영
+            updateUI({
+                isNonTaxable,
+                totalGain,
+                taxableGain: Math.round(taxableGain),
+                longTermRateText: `${(longTermDeductionRate * 100).toFixed(0)}%`,
+                longTermDeductionAmount: Math.round(longTermDeductionAmount * (isJoint ? (1 / jointShare) : 1)),
+                incomeAmount: Math.round(incomeAmount * (isJoint ? (1 / jointShare) : 1)),
+                basicDeduction: isJoint ? basicDeduction * 2 : basicDeduction,
+                taxBase: Math.round(taxBase * (isJoint ? (1 / jointShare) : 1)),
+                taxRateText: `${(taxBracket.rate * 100).toFixed(0)}% (누진공제 ${numberToKorean(taxBracket.deduction)}원)`,
+                calculatedTax: mainTax,
+                mainTax,
+                localTax,
+                totalTax,
+                netGain: totalGain,
+                finalNetProfit,
+                sellPrice
+            });
+        }
+
+        // 양도소득세 누진세율표
+        function getTaxRate(taxBase) {
+            if (taxBase <= 14000000) return { rate: 0.06, deduction: 0 };
+            if (taxBase <= 50000000) return { rate: 0.15, deduction: 1260000 };
+            if (taxBase <= 88000000) return { rate: 0.24, deduction: 5760000 };
+            if (taxBase <= 150000000) return { rate: 0.35, deduction: 15440000 };
+            if (taxBase <= 300000000) return { rate: 0.38, deduction: 19940000 };
+            if (taxBase <= 500000000) return { rate: 0.40, deduction: 25940000 };
+            if (taxBase <= 1000000000) return { rate: 0.42, deduction: 35940000 };
+            return { rate: 0.45, deduction: 65940000 };
+        }
+
+        // UI 요소 업데이트
+        function updateUI(data) {
+            const statusBadge = document.getElementById('taxStatusBadge');
+            if (data.isNonTaxable) {
+                statusBadge.innerText = '1세대 1주택 비과세 적용';
+                statusBadge.className = 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs px-2.5 py-0.5 rounded-full font-bold';
+            } else if (data.totalGain === 0) {
+                statusBadge.innerText = '양도차익 없음 (무세액)';
+                statusBadge.className = 'bg-gray-500/20 text-gray-300 border border-gray-500/30 text-xs px-2.5 py-0.5 rounded-full font-bold';
+            } else {
+                statusBadge.innerText = '과세 대상 거래';
+                statusBadge.className = 'bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs px-2.5 py-0.5 rounded-full font-bold';
+            }
+
+            document.getElementById('totalTaxDisplay').innerText = data.totalTax.toLocaleString() + ' 원';
+            document.getElementById('mainTaxDisplay').innerText = data.mainTax.toLocaleString() + ' 원';
+            document.getElementById('localTaxDisplay').innerText = data.localTax.toLocaleString() + ' 원';
+            document.getElementById('netCapitalGainDisplay').innerText = data.netGain.toLocaleString() + ' 원';
+            document.getElementById('finalNetProfitDisplay').innerText = (data.sellPrice > 0 ? data.finalNetProfit.toLocaleString() : 0) + ' 원';
+
+            document.getElementById('step1Gain').innerText = data.totalGain.toLocaleString() + ' 원';
+            document.getElementById('step2TaxableGain').innerText = data.taxableGain.toLocaleString() + ' 원';
+            document.getElementById('longTermRateText').innerText = `(${data.longTermRateText})`;
+            document.getElementById('step3LongTermDeduction').innerText = '- ' + data.longTermDeductionAmount.toLocaleString() + ' 원';
+            document.getElementById('step4IncomeAmount').innerText = data.incomeAmount.toLocaleString() + ' 원';
+            document.getElementById('step5BasicDeduction').innerText = '- ' + data.basicDeduction.toLocaleString() + ' 원';
+            document.getElementById('step6TaxBase').innerText = data.taxBase.toLocaleString() + ' 원';
+            document.getElementById('step7TaxRate').innerText = data.taxRateText;
+            document.getElementById('step8CalculatedTax').innerText = data.calculatedTax.toLocaleString() + ' 원';
+        }
+    </script>
+<script src="../js/protection.js"></script>
+</body>
+</html>
+```
+eof
+
+이제 우측 화면의 **Preview** 버튼을 누르시거나 코드를 확인해 보시면 숫자를 바꿀 때마다 실시간으로 세액과 실수령액이 즉시 올바르게 산출되는 것을 확인하실 수 있습니다!

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>한눈에 환율 계산기</title>
+<style>
+  :root {
+    --bg: #f4f6fa; --card: #fff; --text: #1c2333; --sub: #6b7385;
+    --line: #e5e8ef; --accent: #2563eb; --accent-soft: #e8efff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #11151f; --card: #1a2030; --text: #e8ecf5; --sub: #8f98ad;
+      --line: #2a3246; --accent: #6b9bff; --accent-soft: #212b45; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; }
+  .top { max-width: 760px; }
+  h1 { font-size: 22px; margin: 4px 0 18px; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .field { flex: 1 1 200px; display: flex; flex-direction: column; gap: 6px; }
+  label { font-size: 12px; color: var(--sub); }
+  select, input[type=text], input[type=search] {
+    font: inherit; font-size: 16px; padding: 11px 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--text); width: 100%;
+  }
+  input#amount { font-size: 20px; font-weight: 600; text-align: right; }
+  select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .status { display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--sub); margin: 14px 2px 10px; flex-wrap: wrap; }
+  .status button { font: inherit; font-size: 12px; padding: 5px 10px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--card); color: var(--text); cursor: pointer; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #aaa; margin-right: 6px; }
+  .dot.ok { background: #22c55e; } .dot.err { background: #ef4444; } .dot.load { background: #f59e0b; }
+  .tools { display: flex; gap: 10px; margin-bottom: 10px; }
+  .tools input { flex: 2; } .tools select { flex: 1; font-size: 14px; }
+  .list { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); }
+  .item { display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+  .item:hover { background: var(--accent-soft); cursor: pointer; }
+  .code { min-width: 40px; text-align: center; font-weight: 700; font-size: 12px; color: var(--accent);
+    background: var(--accent-soft); border-radius: 6px; padding: 5px 0; }
+  .name { flex: 0 0 auto; white-space: nowrap; }
+  .name b { display: block; font-size: 13px; font-weight: 600; }
+  .name span { font-size: 11px; color: var(--sub); }
+  .val { flex: 1; min-width: 0; text-align: right; }
+  .val b { display: block; font-size: 15px; font-variant-numeric: tabular-nums;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .val span { display: block; font-size: 10px; color: var(--sub);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .empty { grid-column: 1 / -1; padding: 30px; text-align: center; color: var(--sub); }
+  .note { font-size: 12px; color: var(--sub); margin-top: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>💱 한눈에 환율 계산기</h1>
+         기준통화를 선택 한 후에 숫자를 입력하면 한 번에 50개국의 환율이 동시에 보입니다.
+  <div class="panel top">
+    <div class="row">
+      <div class="field">
+        <label for="base">기준 통화</label>
+        <select id="base"></select>
+      </div>
+      <div class="field">
+        <label for="amount">금액</label>
+        <input id="amount" type="text" inputmode="decimal" value="" placeholder="금액 입력" autocomplete="off">
+      </div>
+    </div>
+  </div>
+
+  <div class="status">
+    <span><span id="dot" class="dot load"></span><span id="statusText">환율 불러오는 중...</span></span>
+    <button id="refresh" type="button">↻ 새로고침</button>
+  </div>
+
+  <div class="tools top">
+    <input id="search" type="search" placeholder="국가·통화 검색 (예: 일본, JPY)">
+    <select id="sort">
+      <option value="default">기본 순서</option>
+      <option value="desc">결과값 큰 순</option>
+      <option value="asc">결과값 작은 순</option>
+      <option value="name">이름 순</option>
+    </select>
+  </div>
+
+  <div id="list" class="list"></div>
+
+  <p class="note">
+    · 항목을 클릭하면 그 통화가 새 기준 통화로 바뀝니다.<br>
+    · 환율은 외부 환율 API에서 받아온 참고용 시장 환율이며, 은행 환전·송금 시 적용되는 환율(수수료 포함)과 다릅니다.<br>
+    · 인터넷에 연결되어 있어야 최신 환율을 불러올 수 있습니다.
+  </p>
+</div>
+
+<script>
+// ===== 50개 통화 목록 =====
+const CURRENCIES = [
+  ["USD","미국","달러"],["JPY","일본","엔화"],["EUR","유럽연합","유로"],["CNY","중국","위안화"],
+  ["GBP","영국","파운드"],["AUD","호주","호주 달러"],["CAD","캐나다","캐나다 달러"],
+  ["NZD","뉴질랜드","뉴질랜드 달러"],["HKD","홍콩","홍콩 달러"],["SGD","싱가포르","싱가포르 달러"],
+  ["THB","태국","바트"],["VND","베트남","동"],["TWD","대만","타이완 달러"],["PHP","필리핀","페소"],
+  ["IDR","인도네시아","루피아"],["CHF","스위스","프랑"],["INR","인도","루피"],
+  ["MYR","말레이시아","링기트"],["SAR","사우디아라비아","리얄"],["AED","아랍에미리트","디렘"],
+  ["SEK","스웨덴","크로나"],["NOK","노르웨이","크로네"],["DKK","덴마크","크로네"],
+  ["BRL","브라질","레알"],["MXN","멕시코","페소"],["TRY","튀르키예","리라"],
+  ["ZAR","남아프리카공화국","랜드"],["RUB","러시아","루블"],["PLN","폴란드","즐로티"],
+  ["CZK","체코","코루나"],["HUF","헝가리","포린트"],["ILS","이스라엘","셰켈"],
+  ["QAR","카타르","리얄"],["KWD","쿠웨이트","디나르"],["BHD","바레인","디나르"],
+  ["OMR","오만","리알"],["PKR","파키스탄","루피"],["KZT","카자흐스탄","텡게"],
+  ["COP","콜롬비아","페소"],["CLP","칠레","페소"],["ARS","아르헨티나","페소"],
+  ["UAH","우크라이나","흐리브냐"],["RON","루마니아","레우"],["BGN","불가리아","레프"],
+  ["EGP","이집트","파운드"],["LKR","스리랑카","루피"],["BDT","방글라데시","타카"],
+  ["KES","케냐","실링"],["MAD","모로코","디함"],["JOD","요르단","디나르"]
+].map(([code, country, name]) => ({ code, country, name }));
+
+// 한국(KRW)은 요청 목록에 없지만 기준/대상 통화로 포함
+CURRENCIES.unshift({ code: "KRW", country: "대한민국", name: "원" });
+
+// ===== 상태 =====
+let usdRates = null;      // USD 기준 환율표 { KRW: 1380, JPY: 150, ... }
+let updatedAt = null;
+const $ = id => document.getElementById(id);
+const els = { base: $("base"), amount: $("amount"), list: $("list"), search: $("search"),
+  sort: $("sort"), dot: $("dot"), statusText: $("statusText"), refresh: $("refresh") };
+
+// ===== 저장된 설정 =====
+function load(key, def) { try { return localStorage.getItem(key) || def; } catch (e) { return def; } }
+function save(key, val) { try { localStorage.setItem(key, val); } catch (e) {} }
+
+// ===== 환율 가져오기 (API 1순위 + 예비 API) =====
+async function fetchRates() {
+  setStatus("load", "환율 불러오는 중...");
+  // 1순위: open.er-api.com (무료, API 키 불필요)
+  try {
+    const r = await fetch("https://open.er-api.com/v6/latest/USD");
+    const d = await r.json();
+    if (d.result === "success") {
+      usdRates = d.rates;
+      updatedAt = new Date(d.time_last_update_unix * 1000);
+      return done();
+    }
+  } catch (e) { /* 다음 API 시도 */ }
+  // 예비: fawazahmed0 currency-api (CDN)
+  try {
+    const r = await fetch("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json");
+    const d = await r.json();
+    usdRates = {};
+    for (const [k, v] of Object.entries(d.usd)) usdRates[k.toUpperCase()] = v;
+    updatedAt = new Date(d.date + "T00:00:00");
+    return done();
+  } catch (e) {
+    if (usdRates) setStatus("err", "갱신 실패 – 마지막으로 받은 환율을 표시 중입니다");
+    else setStatus("err", "환율을 불러오지 못했습니다. 인터넷 연결을 확인하고 새로고침 해주세요.");
+  }
+  function done() {
+    setStatus("ok", "업데이트: " + updatedAt.toLocaleString("ko-KR") + " 기준");
+    render();
+  }
+}
+
+function setStatus(type, text) {
+  els.dot.className = "dot " + type;
+  els.statusText.textContent = text;
+}
+
+// ===== 계산 =====
+function rate(from, to) {           // 1 from = ? to
+  if (!usdRates || !usdRates[from] || !usdRates[to]) return null;
+  return usdRates[to] / usdRates[from];
+}
+function parseAmount(s) {
+  const n = parseFloat(String(s).replace(/,/g, ""));
+  return isFinite(n) ? n : 0;
+}
+function fmt(v) {
+  if (v === null || !isFinite(v)) return "-";
+  const a = Math.abs(v);
+  let opt;
+  if (a >= 1000) opt = { maximumFractionDigits: 0 };
+  else if (a >= 1) opt = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+  else if (a >= 0.01) opt = { maximumFractionDigits: 4 };
+  else opt = { maximumSignificantDigits: 4 };
+  return v.toLocaleString("en-US", opt);
+}
+
+// ===== 화면 =====
+function render() {
+  const base = els.base.value;
+  const amount = parseAmount(els.amount.value);
+  const q = els.search.value.trim().toLowerCase();
+
+  if (!usdRates) {
+    els.list.innerHTML = '<div class="empty">환율 데이터를 기다리는 중...</div>';
+    return;
+  }
+
+  let rows = CURRENCIES.filter(c => c.code !== base).map(c => {
+    const r = rate(base, c.code);
+    const empty = els.amount.value.trim() === "";
+    return { ...c, r, result: r === null || empty ? null : amount * r };
+  }).filter(c => c.r !== null);
+
+  if (q) rows = rows.filter(c =>
+    (c.code + c.country + c.name).toLowerCase().includes(q));
+
+  const sort = els.sort.value;
+  if (sort === "desc") rows.sort((a, b) => b.r - a.r);
+  else if (sort === "asc") rows.sort((a, b) => a.r - b.r);
+  else if (sort === "name") rows.sort((a, b) => a.country.localeCompare(b.country, "ko"));
+
+  if (!rows.length) { els.list.innerHTML = '<div class="empty">검색 결과가 없습니다.</div>'; return; }
+
+  els.list.innerHTML = rows.map(c => `
+    <div class="item" data-code="${c.code}" title="클릭하면 이 통화를 기준으로 변경">
+      <div class="code">${c.code}</div>
+      <div class="name"><b>${c.country}</b><span>${c.name}</span></div>
+      <div class="val"><b>${fmt(c.result)}</b><span>1 ${base} = ${fmt(c.r)} ${c.code}</span></div>
+    </div>`).join("");
+}
+
+// ===== 초기화 =====
+els.base.innerHTML = CURRENCIES.map(c =>
+  `<option value="${c.code}">${c.country} (${c.code} - ${c.name})</option>`).join("");
+els.base.value = load("fx_base", "KRW");
+
+els.base.addEventListener("change", () => { save("fx_base", els.base.value); render(); });
+els.amount.addEventListener("input", () => {
+  // 숫자와 소수점만 허용, 천 단위 콤마 자동 표시
+  let s = els.amount.value.replace(/[^0-9.]/g, "");
+  const parts = s.split(".");
+  if (parts.length > 2) s = parts[0] + "." + parts.slice(1).join("");
+  const [i, d] = s.split(".");
+  const ii = i ? Number(i).toLocaleString("en-US") : "";
+  els.amount.value = d !== undefined ? ii + "." + d : ii;
+  render();
+});
+els.search.addEventListener("input", render);
+els.sort.addEventListener("change", render);
+els.refresh.addEventListener("click", fetchRates);
+els.list.addEventListener("click", e => {
+  const item = e.target.closest(".item");
+  if (!item) return;
+  els.base.value = item.dataset.code;
+  save("fx_base", els.base.value);
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+fetchRates();
+setInterval(fetchRates, 30 * 60 * 1000); // 30분마다 자동 갱신
+</script>
+<script src="../js/protection.js"></script>
+</body>
+</html>

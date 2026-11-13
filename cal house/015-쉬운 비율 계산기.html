@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>쉬운 비율 계산기 | 일상·업무용 올인원 %</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --card: #1a2332;
+      --card-hover: #243044;
+      --accent: #3b82f6;
+      --accent-soft: rgba(59, 130, 246, 0.15);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text: #e8eef7;
+      --text-muted: #94a3b8;
+      --border: #2d3a4f;
+      --input-bg: #0d1219;
+      --radius: 16px;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      background-image:
+        radial-gradient(ellipse at 20% 0%, rgba(59, 130, 246, 0.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 100%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
+    }
+
+    .container {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      font-size: 1.85rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #60a5fa, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* 탭 네비게이션 */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: 28px;
+      scrollbar-width: none;
+    }
+
+    .tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab {
+      flex-shrink: 0;
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .tab:hover {
+      background: var(--card);
+      color: var(--text);
+    }
+
+    .tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+    }
+
+    /* 카드 */
+    .panel {
+      display: none;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-title .icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .card-desc {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-bottom: 24px;
+    }
+
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 20px;
+      align-items: flex-end;
+    }
+
+    .field {
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 500;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .field input::placeholder {
+      color: #64748b;
+    }
+
+    /* 결과 영역 */
+    .result-box {
+      margin-top: 8px;
+      padding: 20px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(16, 185, 129, 0.08));
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      text-align: center;
+    }
+
+    .result-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .result-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #60a5fa;
+      word-break: break-all;
+    }
+
+    .result-value.positive { color: var(--success); }
+    .result-value.negative { color: var(--danger); }
+
+    .result-sub {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .result-sub strong {
+      color: var(--text);
+    }
+
+    /* 버튼 */
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 13px 20px;
+      border-radius: 10px;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .btn-secondary:hover {
+      background: var(--card-hover);
+      color: var(--text);
+    }
+
+    /* 예시 칩 */
+    .examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .example-chip {
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .example-chip:hover {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* 푸터 */
+    footer {
+      text-align: center;
+      margin-top: 48px;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    /* 반응형 */
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 1.5rem;
+      }
+      .card {
+        padding: 22px 18px;
+      }
+      .result-value {
+        font-size: 1.45rem;
+      }
+      .form-row {
+        flex-direction: column;
+      }
+      .field {
+        min-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>쉬운 비율 계산기</h1>
+      <p>일상과 업무에 필요한 % 계산을 한 번에 간편하게...</p>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="basic" role="tab">① 기본 계산</button>
+      <button class="tab" data-tab="ratio" role="tab">② 비율 비교</button>
+      <button class="tab" data-tab="change" role="tab">③ 변화율</button>
+      <button class="tab" data-tab="adjust" role="tab">④ 증감 계산</button>
+      <button class="tab" data-tab="discount" role="tab">⑤ 할인·할증</button>
+    </nav>
+
+    <!-- ① 기본 계산: A의 B%는 얼마? -->
+    <section class="panel active" id="panel-basic">
+      <div class="card">
+        <div class="card-title">
+          <span class="icon">％</span>
+          A의 B%는 얼마?
+        </div>
+        <p class="card-desc">전체 값에서 원하는 퍼센트만큼의 금액을 구합니다. (예: 50,000원의 15%는?)</p>
+
+        <div class="form-row">
+          <div class="field">
+            <label for="basic-a">기준 값 (A)</label>
+            <input type="number" id="basic-a" placeholder="예: 50000" step="any">
+          </div>
+          <div class="field">
+            <label for="basic-b">퍼센트 (B %)</label>
+            <input type="number" id="basic-b" placeholder="예: 15" step="any">
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="calcBasic()">계산하기</button>
+          <button class="btn btn-secondary" onclick="resetBasic()">초기화</button>
+        </div>
+
+        <div class="result-box" id="basic-result" style="display:none;">
+          <div class="result-label">결과</div>
+          <div class="result-value" id="basic-value">—</div>
+          <div class="result-sub" id="basic-sub"></div>
+        </div>
+
+        <div class="examples">
+          <span class="example-chip" onclick="fillBasic(100000, 10)">10만원의 10%</span>
+          <span class="example-chip" onclick="fillBasic(25000, 8)">2만5천원의 8%</span>
+          <span class="example-chip" onclick="fillBasic(80, 25)">80의 25%</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ② 비율 비교: A는 B의 몇 %? -->
+    <section class="panel" id="panel-ratio">
+      <div class="card">
+        <div class="card-title">
+          <span class="icon">⇆</span>
+          A는 B의 몇 %?
+        </div>
+        <p class="card-desc">한 값이 다른 값의 몇 퍼센트에 해당하는지 구합니다. (예: 30은 120의 몇 %?)</p>
+
+        <div class="form-row">
+          <div class="field">
+            <label for="ratio-a">비교 값 (A)</label>
+            <input type="number" id="ratio-a" placeholder="예: 30" step="any">
+          </div>
+          <div class="field">
+            <label for="ratio-b">기준 값 (B)</label>
+            <input type="number" id="ratio-b" placeholder="예: 120" step="any">
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="calcRatio()">계산하기</button>
+          <button class="btn btn-secondary" onclick="resetRatio()">초기화</button>
+        </div>
+
+        <div class="result-box" id="ratio-result" style="display:none;">
+          <div class="result-label">결과</div>
+          <div class="result-value" id="ratio-value">—</div>
+          <div class="result-sub" id="ratio-sub"></div>
+        </div>
+
+        <div class="examples">
+          <span class="example-chip" onclick="fillRatio(45, 180)">45는 180의 몇%?</span>
+          <span class="example-chip" onclick="fillRatio(7, 20)">7은 20의 몇%?</span>
+          <span class="example-chip" onclick="fillRatio(250, 1000)">250은 1000의 몇%?</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ③ 변화율: A → B 변화율(%) -->
+    <section class="panel" id="panel-change">
+      <div class="card">
+        <div class="card-title">
+          <span class="icon">↕</span>
+          A → B 변화율 (%)
+        </div>
+        <p class="card-desc">시작 값에서 최종 값으로 변했을 때 증가/감소율을 구합니다.</p>
+
+        <div class="form-row">
+          <div class="field">
+            <label for="change-a">시작 값 (A)</label>
+            <input type="number" id="change-a" placeholder="예: 100" step="any">
+          </div>
+          <div class="field">
+            <label for="change-b">최종 값 (B)</label>
+            <input type="number" id="change-b" placeholder="예: 125" step="any">
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="calcChange()">계산하기</button>
+          <button class="btn btn-secondary" onclick="resetChange()">초기화</button>
+        </div>
+
+        <div class="result-box" id="change-result" style="display:none;">
+          <div class="result-label">변화율</div>
+          <div class="result-value" id="change-value">—</div>
+          <div class="result-sub" id="change-sub"></div>
+        </div>
+
+        <div class="examples">
+          <span class="example-chip" onclick="fillChange(80, 100)">80 → 100</span>
+          <span class="example-chip" onclick="fillChange(200, 150)">200 → 150</span>
+          <span class="example-chip" onclick="fillChange(50, 75)">50 → 75</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ④ 수치 증감: A에서 B% 증감하면 -->
+    <section class="panel" id="panel-adjust">
+      <div class="card">
+        <div class="card-title">
+          <span class="icon">±</span>
+          A에서 B% 증감하면?
+        </div>
+        <p class="card-desc">기준 값에 퍼센트만큼 증가 또는 감소시킨 결과를 구합니다.</p>
+
+        <div class="form-row">
+          <div class="field">
+            <label for="adjust-a">기준 값 (A)</label>
+            <input type="number" id="adjust-a" placeholder="예: 200" step="any">
+          </div>
+          <div class="field">
+            <label for="adjust-b">퍼센트 (B %)</label>
+            <input type="number" id="adjust-b" placeholder="예: 15" step="any">
+          </div>
+          <div class="field">
+            <label for="adjust-type">증감 방향</label>
+            <select id="adjust-type">
+              <option value="increase">증가 (+)</option>
+              <option value="decrease">감소 (−)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="calcAdjust()">계산하기</button>
+          <button class="btn btn-secondary" onclick="resetAdjust()">초기화</button>
+        </div>
+
+        <div class="result-box" id="adjust-result" style="display:none;">
+          <div class="result-label">결과</div>
+          <div class="result-value" id="adjust-value">—</div>
+          <div class="result-sub" id="adjust-sub"></div>
+        </div>
+
+        <div class="examples">
+          <span class="example-chip" onclick="fillAdjust(1000, 20, 'increase')">1000에서 20% 증가</span>
+          <span class="example-chip" onclick="fillAdjust(500, 10, 'decrease')">500에서 10% 감소</span>
+          <span class="example-chip" onclick="fillAdjust(80, 25, 'increase')">80에서 25% 증가</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ⑤ 할인·할증 -->
+    <section class="panel" id="panel-discount">
+      <div class="card">
+        <div class="card-title">
+          <span class="icon">🏷</span>
+          정가에서 B% 할인·할증
+        </div>
+        <p class="card-desc">정가에 할인 또는 할증을 적용한 최종 가격과 차액을 함께 보여줍니다.</p>
+
+        <div class="form-row">
+          <div class="field">
+            <label for="disc-price">정가</label>
+            <input type="number" id="disc-price" placeholder="예: 59000" step="any">
+          </div>
+          <div class="field">
+            <label for="disc-rate">퍼센트 (%)</label>
+            <input type="number" id="disc-rate" placeholder="예: 20" step="any">
+          </div>
+          <div class="field">
+            <label for="disc-type">적용 방식</label>
+            <select id="disc-type">
+              <option value="discount">할인 (−)</option>
+              <option value="surcharge">할증 (+)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="calcDiscount()">계산하기</button>
+          <button class="btn btn-secondary" onclick="resetDiscount()">초기화</button>
+        </div>
+
+        <div class="result-box" id="disc-result" style="display:none;">
+          <div class="result-label">최종 가격</div>
+          <div class="result-value" id="disc-value">—</div>
+          <div class="result-sub" id="disc-sub"></div>
+        </div>
+
+        <div class="examples">
+          <span class="example-chip" onclick="fillDiscount(39000, 15, 'discount')">39,000원 15% 할인</span>
+          <span class="example-chip" onclick="fillDiscount(100000, 10, 'surcharge')">10만원 10% 할증</span>
+          <span class="example-chip" onclick="fillDiscount(25000, 30, 'discount')">25,000원 30% 할인</span>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>설치 없이 브라우저에서 바로 사용하는 무료 퍼센트 계산기입니다.</p>
+      <p style="margin-top:6px;">숫자만 입력하면 즉시 결과를 확인할 수 있어요.</p>
+    </footer>
+  </div>
+
+  <script>
+    // 탭 전환
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    // 숫자 포맷 (천 단위 콤마)
+    function fmt(n) {
+      if (n === null || n === undefined || isNaN(n)) return '—';
+      const abs = Math.abs(n);
+      if (abs >= 1e12 || (abs > 0 && abs < 0.0001)) return n.toExponential(4);
+      // 소수 자리 정리
+      let s = Number(n.toPrecision(12)).toString();
+      if (s.includes('e')) return s;
+      const parts = s.split('.');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return parts.join('.');
+    }
+
+    function parseNum(id) {
+      const v = document.getElementById(id).value.trim();
+      if (v === '') return null;
+      const n = Number(v);
+      return isNaN(n) ? null : n;
+    }
+
+    // ① 기본 계산
+    function calcBasic() {
+      const a = parseNum('basic-a');
+      const b = parseNum('basic-b');
+      if (a === null || b === null) {
+        alert('기준 값과 퍼센트를 모두 입력해 주세요.');
+        return;
+      }
+      const result = a * (b / 100);
+      const box = document.getElementById('basic-result');
+      document.getElementById('basic-value').textContent = fmt(result);
+      document.getElementById('basic-sub').innerHTML =
+        `<strong>${fmt(a)}</strong>의 <strong>${fmt(b)}%</strong> = <strong>${fmt(result)}</strong>`;
+      box.style.display = 'block';
+    }
+    function resetBasic() {
+      document.getElementById('basic-a').value = '';
+      document.getElementById('basic-b').value = '';
+      document.getElementById('basic-result').style.display = 'none';
+    }
+    function fillBasic(a, b) {
+      document.getElementById('basic-a').value = a;
+      document.getElementById('basic-b').value = b;
+      calcBasic();
+    }
+
+    // ② 비율 비교
+    function calcRatio() {
+      const a = parseNum('ratio-a');
+      const b = parseNum('ratio-b');
+      if (a === null || b === null) {
+        alert('비교 값과 기준 값을 모두 입력해 주세요.');
+        return;
+      }
+      if (b === 0) {
+        alert('기준 값(B)은 0이 될 수 없습니다.');
+        return;
+      }
+      const result = (a / b) * 100;
+      const box = document.getElementById('ratio-result');
+      document.getElementById('ratio-value').textContent = fmt(result) + ' %';
+      document.getElementById('ratio-sub').innerHTML =
+        `<strong>${fmt(a)}</strong>는 <strong>${fmt(b)}</strong>의 <strong>${fmt(result)}%</strong>입니다.`;
+      box.style.display = 'block';
+    }
+    function resetRatio() {
+      document.getElementById('ratio-a').value = '';
+      document.getElementById('ratio-b').value = '';
+      document.getElementById('ratio-result').style.display = 'none';
+    }
+    function fillRatio(a, b) {
+      document.getElementById('ratio-a').value = a;
+      document.getElementById('ratio-b').value = b;
+      calcRatio();
+    }
+
+    // ③ 변화율
+    function calcChange() {
+      const a = parseNum('change-a');
+      const b = parseNum('change-b');
+      if (a === null || b === null) {
+        alert('시작 값과 최종 값을 모두 입력해 주세요.');
+        return;
+      }
+      if (a === 0) {
+        alert('시작 값(A)이 0이면 변화율을 계산할 수 없습니다.');
+        return;
+      }
+      const result = ((b - a) / a) * 100;
+      const el = document.getElementById('change-value');
+      el.textContent = (result >= 0 ? '+' : '') + fmt(result) + ' %';
+      el.className = 'result-value ' + (result >= 0 ? 'positive' : 'negative');
+      const direction = result > 0 ? '증가' : result < 0 ? '감소' : '변화 없음';
+      document.getElementById('change-sub').innerHTML =
+        `<strong>${fmt(a)}</strong> → <strong>${fmt(b)}</strong> · ${Math.abs(result) === 0 ? '변화 없음' : Math.abs(fmt(result)) + '% ' + direction}`;
+      document.getElementById('change-result').style.display = 'block';
+    }
+    function resetChange() {
+      document.getElementById('change-a').value = '';
+      document.getElementById('change-b').value = '';
+      document.getElementById('change-result').style.display = 'none';
+    }
+    function fillChange(a, b) {
+      document.getElementById('change-a').value = a;
+      document.getElementById('change-b').value = b;
+      calcChange();
+    }
+
+    // ④ 증감 계산
+    function calcAdjust() {
+      const a = parseNum('adjust-a');
+      const b = parseNum('adjust-b');
+      const type = document.getElementById('adjust-type').value;
+      if (a === null || b === null) {
+        alert('기준 값과 퍼센트를 모두 입력해 주세요.');
+        return;
+      }
+      const factor = type === 'increase' ? (1 + b / 100) : (1 - b / 100);
+      const result = a * factor;
+      const delta = result - a;
+      document.getElementById('adjust-value').textContent = fmt(result);
+      document.getElementById('adjust-sub').innerHTML =
+        `<strong>${fmt(a)}</strong>에서 <strong>${fmt(b)}%</strong> ${type === 'increase' ? '증가' : '감소'} → ` +
+        `결과 <strong>${fmt(result)}</strong> (차액 ${delta >= 0 ? '+' : ''}${fmt(delta)})`;
+      document.getElementById('adjust-result').style.display = 'block';
+    }
+    function resetAdjust() {
+      document.getElementById('adjust-a').value = '';
+      document.getElementById('adjust-b').value = '';
+      document.getElementById('adjust-type').value = 'increase';
+      document.getElementById('adjust-result').style.display = 'none';
+    }
+    function fillAdjust(a, b, type) {
+      document.getElementById('adjust-a').value = a;
+      document.getElementById('adjust-b').value = b;
+      document.getElementById('adjust-type').value = type;
+      calcAdjust();
+    }
+
+    // ⑤ 할인·할증
+    function calcDiscount() {
+      const price = parseNum('disc-price');
+      const rate = parseNum('disc-rate');
+      const type = document.getElementById('disc-type').value;
+      if (price === null || rate === null) {
+        alert('정가와 퍼센트를 모두 입력해 주세요.');
+        return;
+      }
+      const amount = price * (rate / 100);
+      const final = type === 'discount' ? price - amount : price + amount;
+      document.getElementById('disc-value').textContent = fmt(final) + ' 원';
+      const label = type === 'discount' ? '할인 금액' : '할증 금액';
+      document.getElementById('disc-sub').innerHTML =
+        `정가 <strong>${fmt(price)}</strong>원 · ${label} <strong>${fmt(amount)}</strong>원 · 최종 <strong>${fmt(final)}</strong>원`;
+      document.getElementById('disc-result').style.display = 'block';
+    }
+    function resetDiscount() {
+      document.getElementById('disc-price').value = '';
+      document.getElementById('disc-rate').value = '';
+      document.getElementById('disc-type').value = 'discount';
+      document.getElementById('disc-result').style.display = 'none';
+    }
+    function fillDiscount(price, rate, type) {
+      document.getElementById('disc-price').value = price;
+      document.getElementById('disc-rate').value = rate;
+      document.getElementById('disc-type').value = type;
+      calcDiscount();
+    }
+
+    // Enter 키로 계산
+    document.querySelectorAll('input').forEach(input => {
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          const panel = input.closest('.panel');
+          if (!panel) return;
+          if (panel.id === 'panel-basic') calcBasic();
+          else if (panel.id === 'panel-ratio') calcRatio();
+          else if (panel.id === 'panel-change') calcChange();
+          else if (panel.id === 'panel-adjust') calcAdjust();
+          else if (panel.id === 'panel-discount') calcDiscount();
+        }
+      });
+    });
+  </script>
+<script src="../js/protection.js"></script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>쉬운 DSR 계산기 | 총부채원리금상환비율</title>
+<style>
+:root{--navy:#17345c;--blue:#2563eb;--sky:#eaf2ff;--green:#087f5b;--red:#c0392b;--amber:#a45b00;--ink:#172033;--muted:#64748b;--line:#dce4ef;--bg:#f4f7fb}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Malgun Gothic","맑은 고딕",sans-serif;line-height:1.55}
+.wrap{max-width:980px;margin:0 auto;padding:28px 18px 60px}.hero{background:linear-gradient(130deg,#17345c,#2563eb);color:#fff;padding:30px;border-radius:20px;box-shadow:0 10px 28px #17345c22}
+.hero h1{font-size:clamp(25px,4vw,36px);margin:0 0 8px}.hero p{margin:0;color:#e6efff}.tag{display:inline-block;background:#ffffff20;border:1px solid #ffffff55;border-radius:99px;padding:4px 10px;font-size:12px;margin-bottom:12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;margin-top:18px;box-shadow:0 4px 16px #1e3a5f08}
+h2{font-size:21px;margin:0 0 6px;color:var(--navy)}.sub{color:var(--muted);font-size:14px;margin:0 0 18px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.field label{display:block;font-weight:750;margin-bottom:7px}.important label{font-size:17px;color:#17345c}.field input,.field select{width:100%;padding:13px 12px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:17px;background:#fff;color:var(--ink);outline:none}.field input:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 3px #2563eb18}
+.important input{border:2px solid var(--blue);background:#f5f9ff;font-weight:750;font-size:20px}.hint{display:block;color:var(--muted);font-size:12px;margin-top:5px}.callout{background:#fff8e8;border-left:4px solid #f0a020;padding:11px 13px;border-radius:8px;font-size:13px;color:#704600;margin:14px 0}
+.debt{border:1px solid var(--line);border-radius:13px;padding:16px;margin:12px 0;background:#fcfdff}.debt-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.debt-head strong{color:var(--navy)}.remove{border:0;background:#fff0f0;color:#b42318;border-radius:8px;padding:7px 10px;cursor:pointer}
+button{cursor:pointer;font-weight:750;border:0;border-radius:10px;padding:13px 18px;font-size:15px}.add{background:var(--sky);color:var(--blue);border:1px dashed #7aa7fa;width:100%;margin-top:5px}.primary{background:var(--blue);color:white;width:100%;font-size:18px;padding:16px;margin-top:18px}.secondary{background:#edf2f8;color:var(--navy)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.actions button{flex:1}
+.result{display:none}.result-top{display:grid;grid-template-columns:1fr 1fr;gap:14px}.metric{background:#f4f8ff;border-radius:13px;padding:18px}.metric small{color:var(--muted);font-weight:650}.metric strong{display:block;font-size:clamp(27px,5vw,38px);color:var(--navy);margin-top:3px}.metric.highlight{background:#eaf7f2}.metric.highlight strong{color:var(--green)}
+.bar{height:16px;background:#e7edf5;border-radius:99px;overflow:hidden;margin:18px 0 8px}.bar>span{display:block;height:100%;width:0;background:var(--green);transition:width .3s}.status{font-weight:800;font-size:17px}.breakdown{width:100%;border-collapse:collapse;margin-top:14px}.breakdown td{padding:10px 4px;border-bottom:1px solid var(--line)}.breakdown td:last-child{text-align:right;font-weight:750;font-variant-numeric:tabular-nums}
+.note{font-size:13px;color:var(--muted)}.legal{font-size:12px;color:#64748b;line-height:1.7}.footer{text-align:center;color:#8490a2;font-size:12px;margin:24px 0}
+@media(max-width:650px){.wrap{padding:14px 12px 40px}.hero{padding:23px 19px}.card{padding:17px}.grid,.result-top{grid-template-columns:1fr}.field input,.field select{font-size:16px}.important input{font-size:19px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+ <span class="tag">누구나 쉽게 사용하는 금융 계산 도구</span>
+ <h1>총부채원리금상환비율<br>(DSR) 계산기</h1>
+ <p>내 소득에 비해 대출 상환 부담이 얼마나 되는지 간편하게 확인해 보세요.</p>
+</header>
+
+<section class="card">
+ <h2>① 나의 연소득</h2>
+ <p class="sub">대출을 갚을 수 있는 능력을 판단하는 가장 중요한 기준입니다.</p>
+ <div class="grid">
+  <div class="field important">
+   <label for="income">연간 세전 소득 <span style="color:#c0392b">★ 필수</span></label>
+   <input id="income" type="number" min="1" step="100000" placeholder="예: 60000000">
+   <span class="hint">세금을 떼기 전 1년 동안의 소득입니다. 월급이 500만 원이면 6,000만 원을 입력하세요.</span>
+  </div>
+  <div class="field">
+   <label for="sector">계산 기준(금융회사)</label>
+   <select id="sector"><option value="40">은행권 (참고 기준 40%)</option><option value="50">비은행권 (참고 기준 50%)</option><option value="custom">직접 입력</option></select>
+   <span class="hint">금융회사와 대출 종류에 따라 적용 기준은 달라질 수 있습니다.</span>
+  </div>
+  <div class="field" id="customWrap" style="display:none">
+   <label for="limit">비교할 DSR 기준 (%)</label><input id="limit" type="number" min="1" max="100" value="40">
+  </div>
+ </div>
+ <div class="callout"><b>어떤 소득을 입력하나요?</b><br>직장인은 보통 원천징수영수증의 소득을, 사업자는 소득금액증명 등으로 확인되는 소득을 참고하세요. 실제 인정소득은 금융회사가 심사합니다.</div>
+</section>
+
+<section class="card">
+ <h2>② 현재 가지고 있는 대출</h2>
+ <p class="sub">현재 갚고 있는 대출을 모두 입력하세요. 대출이 없다면 입력하지 않아도 됩니다.</p>
+ <div id="debts"></div>
+ <button class="add" id="addDebt" type="button">＋ 기존 대출 추가하기</button>
+ <div class="callout"><b>입력 방법이 어렵다면?</b><br>대출 앱이나 은행 거래내역에서 매월 실제로 납부하는 원금과 이자의 합계를 확인해 입력하면 됩니다. 카드값 전체가 아니라 장기카드대출(카드론) 등 대출 상환액을 입력하세요.</div>
+</section>
+
+<section class="card">
+ <h2>③ 새로 받으려는 대출 (선택)</h2>
+ <p class="sub">새 대출을 받았을 때 DSR이 어떻게 달라지는지 미리 계산합니다.</p>
+ <div class="grid">
+  <div class="field"><label for="newAmount">새 대출 희망 금액 (원)</label><input id="newAmount" type="number" min="0" step="1000000" placeholder="예: 300000000"><span class="hint">예: 3억 원은 300000000으로 입력</span></div>
+  <div class="field"><label for="newRate">예상 대출 금리 (%)</label><input id="newRate" type="number" min="0" max="40" step="0.1" placeholder="예: 4.2"></div>
+  <div class="field"><label for="newYears">대출 기간 (년)</label><input id="newYears" type="number" min="1" max="50" step="1" placeholder="예: 30"></div>
+  <div class="field"><label for="repay">원금 상환 방식</label><select id="repay"><option value="annuity">원리금균등분할상환</option><option value="equal">원금균등분할상환</option><option value="interest">만기일시상환 (이자만 납부)</option></select></div>
+ </div>
+ <div class="callout">신규 대출의 월 상환액은 입력한 금리와 기간으로 단순 추정합니다. 거치기간, 만기상환액, 금리변동 및 금융회사별 DSR 산정 방식은 반영되지 않습니다.</div>
+</section>
+
+<button class="primary" id="calculate" type="button">내 DSR 계산하기</button>
+
+<section class="card result" id="result" aria-live="polite">
+ <h2>계산 결과</h2>
+ <p class="sub">입력하신 내용을 기준으로 추정한 결과입니다.</p>
+ <div class="result-top">
+  <div class="metric highlight"><small>예상 DSR</small><strong id="dsrValue">0.0%</strong></div>
+  <div class="metric"><small>연간 원리금 상환액</small><strong id="annualValue">0원</strong></div>
+ </div>
+ <div class="bar"><span id="barFill"></span></div>
+ <div class="status" id="status"></div>
+ <p class="note" id="statusText"></p>
+ <table class="breakdown">
+  <tr><td>연간 소득</td><td id="rIncome">-</td></tr>
+  <tr><td>기존 대출 연간 상환액</td><td id="rOld">-</td></tr>
+  <tr><td>신규 대출 연간 상환액(추정)</td><td id="rNew">-</td></tr>
+  <tr><td>비교 기준 DSR</td><td id="rLimit">-</td></tr>
+  <tr><td><b>기준 대비 연간 상환 여력(단순 계산)</b></td><td id="rRoom">-</td></tr>
+ </table>
+ <div class="callout" id="explain"></div>
+ <div class="actions"><button class="secondary" type="button" onclick="window.print()">결과 인쇄 / PDF 저장</button><button class="secondary" type="button" id="reset">다시 입력하기</button></div>
+</section>
+
+<section class="card">
+ <h2>DSR이란 무엇인가요?</h2>
+ <p>DSR은 총부채원리금상환비율(Debt Service Ratio)의 약자로, 1년 동안 갚아야 하는 모든 금융부채의 원금과 이자를 연소득으로 나눈 비율입니다.</p>
+ <p><b>계산식:</b> 연간 모든 대출 원리금 상환액 ÷ 연간 소득 × 100</p>
+ <p>예를 들어 연소득이 6,000만 원이고 1년 동안 갚는 대출 원리금이 2,400만 원이라면 DSR은 40%입니다.</p>
+</section>
+
+<section class="card">
+ <h2>꼭 확인해 주세요</h2>
+ <ul class="legal">
+  <li>이 계산기는 일반 사용자를 위한 간편 추정 도구이며, 금융회사의 공식 DSR 심사 결과가 아닙니다.</li>
+  <li>은행권 40%, 비은행권 50%는 일반적으로 알려진 차주단위 DSR 규제 기준을 안내한 것으로, 모든 대출에 일률적으로 적용되는 것은 아닙니다. 적용 대상·예외·한도는 대출 종류, 금액, 금융업권 및 정책에 따라 달라집니다.</li>
+  <li>스트레스 DSR은 지역, 담보 종류, 금리 유형, 고정금리 기간, 대출 시점 등에 따라 적용 금리와 반영 비율이 달라집니다. 본 계산 결과에는 스트레스 금리 및 세부 규제 산식이 반영되지 않았습니다.</li>
+  <li>기존 대출은 사용자가 입력한 월 상환액을 12배하여 연간 상환액으로 계산합니다. 실제 DSR 산정에서는 대출 종류별 별도 산정 방식과 제외 항목이 적용될 수 있습니다.</li>
+  <li>대출 가능 여부와 실제 한도는 금융회사에 확인하세요. 중요한 금융 의사결정 전에 은행 또는 금융 전문가의 상담을 권장합니다.</li>
+ </ul>
+ <p class="legal">참고자료: 금융위원회 DSR 개념 및 산정 관련 안내, 스트레스 DSR 제도 발표자료<br>
+ <a href="https://fsc.go.kr/po020201/27351" target="_blank" rel="noopener">금융위원회 DSR 자주 묻는 질문</a> ·
+ <a href="https://fsc.go.kr/no010101/84617" target="_blank" rel="noopener">금융위원회 스트레스 DSR 안내</a></p>
+</section>
+<div class="footer">쉬운 DSR 계산기 · 입력한 정보는 이 브라우저 안에서만 계산됩니다.</div>
+</div>
+<script>
+const debts=document.getElementById('debts');
+function addDebt(){
+ const box=document.createElement('div');box.className='debt';
+ box.innerHTML=`<div class="debt-head"><strong>기존 대출</strong><button class="remove" type="button">삭제</button></div>
+ <div class="grid">
+ <div class="field"><label>대출 종류</label><select class="kind"><option>주택담보대출</option><option>신용대출</option><option>자동차 할부금융</option><option>학자금대출</option><option>카드론(장기카드대출)</option><option>기타 대출</option></select></div>
+ <div class="field important"><label>매월 갚는 원금 + 이자 (원)</label><input class="monthly" type="number" min="0" step="10000" placeholder="예: 850000"><span class="hint">매달 통장에서 빠져나가는 대출 상환액을 입력하세요.</span></div>
+ </div>`;
+ box.querySelector('.remove').addEventListener('click',()=>box.remove());debts.appendChild(box);
+}
+document.getElementById('addDebt').addEventListener('click',addDebt);
+document.getElementById('sector').addEventListener('change',e=>document.getElementById('customWrap').style.display=e.target.value==='custom'?'block':'none');
+function won(n){return Math.round(n).toLocaleString('ko-KR')+'원'}
+function calcNew(){
+ const P=Number(document.getElementById('newAmount').value)||0;
+ const rate=(Number(document.getElementById('newRate').value)||0)/1200;
+ const years=Number(document.getElementById('newYears').value)||0;
+ const n=years*12;if(P<=0||n<=0)return 0;
+ const mode=document.getElementById('repay').value;
+ if(mode==='interest')return P*rate*12;
+ if(mode==='annuity'){const m=rate===0?P/n:P*rate/(1-Math.pow(1+rate,-n));return m*12}
+ // 원금균등: 첫 12개월의 원금+이자 합계
+ let total=0;for(let k=0;k<Math.min(12,n);k++)total+=P/n+(P-k*P/n)*rate;
+ return total;
+}
+document.getElementById('calculate').addEventListener('click',()=>{
+ const income=Number(document.getElementById('income').value);
+ if(!income||income<=0){alert('연간 세전 소득을 먼저 입력해 주세요.');document.getElementById('income').focus();return}
+ let old=0;for(const el of debts.querySelectorAll('.monthly'))old+=(Number(el.value)||0)*12;
+ const fresh=calcNew(),annual=old+fresh,dsr=annual/income*100;
+ const s=document.getElementById('sector').value;
+ const limit=s==='custom'?(Number(document.getElementById('limit').value)||40):Number(s);
+ document.getElementById('dsrValue').textContent=dsr.toFixed(1)+'%';
+ document.getElementById('annualValue').textContent=won(annual);
+ document.getElementById('rIncome').textContent=won(income);
+ document.getElementById('rOld').textContent=won(old);
+ document.getElementById('rNew').textContent=won(fresh);
+ document.getElementById('rLimit').textContent=limit+'%';
+ const room=income*limit/100-annual;
+ document.getElementById('rRoom').textContent=(room>=0?'+':'')+won(room);
+ const fill=document.getElementById('barFill');fill.style.width=Math.min(dsr,100)+'%';fill.style.background=dsr>limit?'#c0392b':dsr>limit*.8?'#d97706':'#087f5b';
+ const status=document.getElementById('status');
+ if(dsr>limit){status.textContent='선택한 기준을 초과했습니다.';status.style.color='#c0392b';document.getElementById('statusText').textContent='현재 입력값 기준 DSR이 비교 기준보다 높습니다. 대출 가능 여부는 금융회사에 확인해야 합니다.'}
+ else{status.textContent='선택한 기준 이내입니다.';status.style.color='#087f5b';document.getElementById('statusText').textContent='단순 계산상 선택한 기준 이내입니다. 이것이 대출 승인이나 한도를 보장하지는 않습니다.'}
+ document.getElementById('explain').textContent=`연소득 ${won(income)} 중 연간 대출 상환액은 ${won(annual)}으로 계산되었습니다. 선택한 기준(${limit}%)을 적용한 단순 연간 상환 여력은 ${won(room)}입니다.`;
+ const result=document.getElementById('result');result.style.display='block';result.scrollIntoView({behavior:'smooth',block:'start'});
+});
+document.getElementById('reset').addEventListener('click',()=>{document.querySelectorAll('input').forEach(x=>x.value='');debts.innerHTML='';document.getElementById('result').style.display='none';window.scrollTo({top:0,behavior:'smooth'})});
+</script>
+<script src="../js/protection.js"></script>
+</body>
+</html>
